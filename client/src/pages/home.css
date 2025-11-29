@@ -1,0 +1,34 @@
+.title{
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+
+h2 {
+    font-size: xxx-large;
+}
+
+h3 {
+    font-size: x-large;
+}
+
+p {
+    font-size: large;
+}
+
+.sotd {
+    display: flex;
+    justify-content: space-around;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    min-width: 100vw;
+}
+
+.subHeader{
+    align-items: left;
+    display: flex;
+
+}
