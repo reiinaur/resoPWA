@@ -118,7 +118,17 @@ export function Home() {
         {songOfDay ? (
           <div className="song-of-day-card">
             <div className="song-artwork">
-              🎶
+              {songOfDay.image ? (
+                <img 
+                  src={songOfDay.image} 
+                  alt={`${songOfDay.album} cover`}
+                  className="song-artwork-image"
+                />
+              ) : (
+                <div className="song-artwork-placeholder">
+                  🎵
+                </div>
+              )}
             </div>
             <div className="song-info">
               <h3 className="song-name">{songOfDay.name}</h3>

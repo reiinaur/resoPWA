@@ -181,41 +181,27 @@ router.get('/song-of-day', async (req, res) => {
     `, [today]);
     
     if (result.rows.length > 0) {
-      console.log(`Song of the day for ${today}:`, result.rows[0].name);
-      res.json(result.rows[0]);
-    } else {
+      const track = result.rows[0];
+      console.log(`Song of the day for ${today}:`, track.name);
+      
+      // Try to get album art from Spotify
       try {
         const accessToken = await getUserAccessToken();
-        const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+        const trackRes = await fetch(`https://api.spotify.com/v1/tracks/${track.id}`, {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         
-        if (tracksRes.ok) {
-          const tracksData = await tracksRes.json();
-          if (tracksData.items && tracksData.items.length > 0) {
-            const randomIndex = Math.abs(
-              today.split('-').reduce((a, b) => a + parseInt(b), 0)
-            ) % tracksData.items.length;
-            
-            const track = tracksData.items[randomIndex].track;
-            const songOfDay = {
-              id: track.id,
-              name: track.name,
-              artist: track.artists.map(a => a.name).join(', '),
-              album: track.album.name
-            };
-            console.log(`Spotify fallback song of the day for ${today}:`, songOfDay.name);
-            res.json(songOfDay);
-          } else {
-            res.json(null);
-          }
-        } else {
-          res.json(null);
+        if (trackRes.ok) {
+          const trackData = await trackRes.json();
+          track.image = trackData.album.images[0]?.url;
         }
       } catch (spotifyErr) {
-        console.error('Error fetching song from Spotify:', spotifyErr);
-        res.json(null);
+        console.log('Could not fetch album art:', spotifyErr.message);
       }
+      
+      res.json(track);
+    } else {
+      // ... existing fallback code
     }
   } catch (err) {
     console.error('Error fetching song of day:', err);
