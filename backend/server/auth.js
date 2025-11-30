@@ -11,6 +11,7 @@ const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
 
+// Login route: redirect user to Spotify auth
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -22,14 +23,13 @@ router.get('/login', (req, res) => {
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
-const db = pool;
-await db.query('INSERT INTO tracks ...');
-
+// Spotify callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
   if (!code) return res.send('No code received');
 
   try {
+    // Get access token from Spotify
     const authHeader = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
     ).toString('base64');
@@ -51,13 +51,14 @@ router.get('/callback', async (req, res) => {
     const accessToken = tokenData.access_token;
     if (!accessToken) return res.send('Token error');
 
+    // Fetch user's saved tracks
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-
     const tracksData = await tracksRes.json();
     console.log('Fetched tracks count:', tracksData.items.length);
 
+    // Insert tracks into PostgreSQL
     for (let item of tracksData.items) {
       const t = item.track;
       await pool.query(
@@ -77,6 +78,7 @@ router.get('/callback', async (req, res) => {
   }
 });
 
+// Route to fetch all tracks
 router.get('/tracks', async (req, res) => {
   try {
     const result = await pool.query('SELECT * FROM tracks');
