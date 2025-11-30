@@ -51,19 +51,41 @@ router.get('/callback', async (req, res) => {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     const tracksData = await tracksRes.json();
+
     const db = await setupDB();
+    const trackList = [];
 
     for (let item of tracksData.items) {
       const t = item.track;
+      const trackObj = {
+        id: t.id,
+        name: t.name,
+        artist: t.artists.map(a => a.name).join(', '),
+        album: t.album.name
+      };
+      trackList.push(trackObj);
+
       await db.run(
         `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
-        [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
+        [trackObj.id, trackObj.name, trackObj.artist, trackObj.album]
       );
     }
 
-    console.log('Tracks inserted:', tracksData.items.length);
+    console.log('Fetched tracks:', trackList.length);
 
-    res.redirect(process.env.FRONTEND_RESULTS_URL);
+    res.send(`
+      <html>
+        <head>
+          <script>
+            localStorage.setItem('spotifyTracks', '${JSON.stringify(trackList)}');
+            window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
+          </script>
+        </head>
+        <body>
+          Redirecting to results...
+        </body>
+      </html>
+    `);
 
   } catch (err) {
     console.error('Spotify callback error:', err);

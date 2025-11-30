@@ -2,13 +2,13 @@ import { useEffect, useState } from 'react';
 
 export function Results() {
   const [tracks, setTracks] = useState([]);
-  const backendUrl = import.meta.env.VITE_API_URL; 
 
   useEffect(() => {
-    fetch(`${backendUrl}/tracks`)
-      .then(res => res.json())
-      .then(data => setTracks(data))
-      .catch(err => console.error('Error fetching tracks:', err));
+    const storedTracks = localStorage.getItem('spotifyTracks');
+    if (storedTracks) {
+      setTracks(JSON.parse(storedTracks));
+      localStorage.removeItem('spotifyTracks');
+    }
   }, []);
 
   return (
