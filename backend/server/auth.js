@@ -16,7 +16,7 @@ router.get('/login', (req, res) => {
     client_id: process.env.SPOTIFY_CLIENT_ID,
     scope: scopes,
     redirect_uri: redirectUri,
-    state: 'some_random_state_string' 
+    state: 'some_random_state_string'
   });
 
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
@@ -78,6 +78,7 @@ router.get('/callback', async (req, res) => {
     const tracksData = await tracksRes.json();
     console.log('Fetched tracks count:', tracksData.items?.length || 0);
 
+    let savedCount = 0;
     if (tracksData.items && tracksData.items.length > 0) {
       for (let item of tracksData.items) {
         const t = item.track;
@@ -90,13 +91,15 @@ router.get('/callback', async (req, res) => {
              album = EXCLUDED.album`,
           [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
         );
+        savedCount++;
       }
-      console.log(`Successfully saved ${tracksData.items.length} tracks to PostgreSQL.`);
+      console.log(`Successfully saved ${savedCount} tracks to PostgreSQL.`);
     } else {
       console.log('No tracks found in Spotify library');
     }
 
-    res.redirect(`${process.env.FRONTEND_RESULTS_URL}?success=true&count=${tracksData.items?.length || 0}`);
+    console.log('Redirecting to:', `${process.env.FRONTEND_RESULTS_URL}?success=true&count=${savedCount}`);
+    res.redirect(`${process.env.FRONTEND_RESULTS_URL}?success=true&count=${savedCount}`);
 
   } catch (err) {
     console.error('Spotify callback error:', err);
@@ -123,7 +126,6 @@ router.get('/search', async (req, res) => {
       return res.json(result.rows);
     }
 
-    // Search in tracks
     const result = await pool.query(
       `SELECT * FROM tracks 
        WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
@@ -137,9 +139,5 @@ router.get('/search', async (req, res) => {
     res.status(500).json({ error: 'Error searching tracks' });
   }
 });
-
-console.log('Tracks saved to PostgreSQL.');
-console.log('Redirecting to:', `${process.env.FRONTEND_RESULTS_URL}?success=true&count=${tracksData.items?.length || 0}`);
-res.redirect(`${process.env.FRONTEND_RESULTS_URL}?success=true&count=${tracksData.items?.length || 0}`);
 
 export default router;
