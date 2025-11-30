@@ -44,13 +44,23 @@ router.get('/callback', async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
+    console.log('Token response:', tokenData); // <-- log token response
+
     const accessToken = tokenData.access_token;
     if (!accessToken) return res.send('Token error');
 
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
+
+    if (!tracksRes.ok) {
+      const errorText = await tracksRes.text();
+      console.error('Error fetching tracks:', errorText);
+      return res.status(500).send('Failed to fetch tracks from Spotify');
+    }
+
     const tracksData = await tracksRes.json();
+    console.log('Fetched tracks count:', tracksData.items.length);
 
     const db = await setupDB();
     const trackList = [];
@@ -71,28 +81,24 @@ router.get('/callback', async (req, res) => {
       );
     }
 
-    console.log('Fetched tracks:', trackList.length);
-
     res.send(`
-    <html>
-      <head>
-        <script>
-          const tracks = ${JSON.stringify(trackList)};
-          // Store as JSON string
-          localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
-          window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
-        </script>
-      </head>
-      <body>
-        Redirecting to results...
-      </body>
-    </html>
-  `);
-
+      <html>
+        <head>
+          <script>
+            const tracks = ${JSON.stringify(trackList)};
+            localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
+            window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
+          </script>
+        </head>
+        <body>
+          Redirecting to results...
+        </body>
+      </html>
+    `);
 
   } catch (err) {
-    console.error('Spotify callback error:', err);
-    res.status(500).send('Error during callback');
+    console.error('Spotify callback error:', err); // <-- detailed log
+    res.status(500).send('Error during callback: ' + err.message);
   }
 });
 
