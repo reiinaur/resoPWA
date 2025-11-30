@@ -1,10 +1,28 @@
-// server/db.js
 import pkg from 'pg';
 const { Pool } = pkg;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }, // required for Railway
+  ssl: { rejectUnauthorized: false },
 });
+
+async function createTables() {
+  try {
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS tracks (
+        id VARCHAR(255) PRIMARY KEY,
+        name TEXT NOT NULL,
+        artist TEXT NOT NULL,
+        album TEXT NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
+    `);
+    console.log('Tracks table verified/created successfully');
+  } catch (err) {
+    console.error('Error creating tables:', err);
+  }
+}
+
+createTables();
 
 export default pool;
