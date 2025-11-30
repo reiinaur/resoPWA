@@ -6,6 +6,7 @@ import { Explore } from './pages/explore'
 import { Layout } from './layout'
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
+import { MusicPlayer } from './components/musicPlayer'
 
 function  App() {
 
@@ -19,6 +20,9 @@ return (
 					<Route path = "/details" element={<Details/>}/>
 				</Route>
 			</Routes>
+		<div>
+			<MusicPlayer/>
+		</div>
 		</Router>
 	)
 }

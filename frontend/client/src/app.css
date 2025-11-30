@@ -11,3 +11,15 @@
   background-color: #2b2b2b;
 }
 
+.App {
+  position: relative;
+  min-height: 100vh;
+}
+
+.main-content {
+  padding-bottom: 80px; 
+}
+
+.music-player.expanded ~ .main-content {
+  padding-bottom: 200px; 
+}

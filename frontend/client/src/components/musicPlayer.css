@@ -1,12 +1,271 @@
-*{
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+/* MusicPlayer.css */
+.music-player {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: white;
+  border-top: 2px solid #ffe4ed;
+  box-shadow: 0 -2px 20px rgba(0, 0, 0, 0.1);
+  z-index: 1000;
+  transition: all 0.3s ease;
 }
 
-.musicPlayer{
-    background: #ffe0e5;
-    width: 400px;
-    padding: 25px 35px;
-    text-align: center
+.music-player.expanded {
+  height: 200px;
+}
+
+/* Mini Player */
+.mini-player {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.track-info-mini {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
+}
+
+.track-image-mini {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.track-details-mini {
+  display: flex;
+  flex-direction: column;
+}
+
+.track-name-mini {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #333;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+}
+
+.track-artist-mini {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.player-controls {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.control-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 8px;
+  border-radius: 50%;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: #ffe4ed;
+  transform: scale(1.1);
+}
+
+.control-btn.primary {
+  font-size: 1.5rem;
+}
+
+.control-btn.secondary {
+  font-size: 1.1rem;
+  opacity: 0.7;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  font-size: 1rem;
+  cursor: pointer;
+  padding: 5px;
+  color: #666;
+  transition: all 0.2s ease;
+}
+
+.expand-btn:hover {
+  color: #333;
+  transform: scale(1.1);
+}
+
+/* Expanded Player */
+.expanded-player {
+  padding: 20px;
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr;
+  gap: 30px;
+  align-items: center;
+  height: 140px;
+}
+
+.expanded-track-info {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+.expanded-track-image {
+  width: 80px;
+  height: 80px;
+  border-radius: 10px;
+  object-fit: cover;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.expanded-track-details h3 {
+  margin: 0 0 5px 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+
+.expanded-track-details p {
+  margin: 0 0 3px 0;
+  color: #666;
+  font-size: 0.9rem;
+}
+
+/* Playback Controls */
+.playback-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 15px;
+}
+
+.progress-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
+
+.time-current,
+.time-total {
+  font-size: 0.8rem;
+  color: #666;
+  min-width: 40px;
+}
+
+.progress-bar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: #e0e0e0;
+  outline: none;
+  cursor: pointer;
+}
+
+.progress-bar::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffe4ed;
+  cursor: pointer;
+}
+
+.progress-bar::-moz-range-thumb {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffe4ed;
+  cursor: pointer;
+  border: none;
+}
+
+.control-buttons {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+}
+
+/* Volume Controls */
+.volume-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+.volume-icon {
+  font-size: 1rem;
+  color: #666;
+}
+
+.volume-slider {
+  width: 100px;
+  height: 4px;
+  border-radius: 2px;
+  background: #e0e0e0;
+  outline: none;
+}
+
+.volume-slider::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #ffe4ed;
+  cursor: pointer;
+}
+
+.volume-percent {
+  font-size: 0.8rem;
+  color: #666;
+  min-width: 35px;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .expanded-player {
+    grid-template-columns: 1fr;
+    grid-template-rows: auto auto auto;
+    gap: 15px;
+    height: auto;
+    padding: 15px;
+  }
+  
+  .expanded-track-info {
+    justify-content: center;
+    text-align: center;
+  }
+  
+  .volume-controls {
+    justify-content: center;
+  }
+  
+  .track-name-mini {
+    max-width: 150px;
+  }
+}
+
+@media (max-width: 480px) {
+  .mini-player {
+    padding: 8px 15px;
+  }
+  
+  .track-name-mini {
+    max-width: 120px;
+  }
+  
+  .expanded-track-image {
+    width: 60px;
+    height: 60px;
+  }
 }
