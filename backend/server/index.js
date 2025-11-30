@@ -19,30 +19,31 @@ app.use(cors({ origin: true, credentials: true }));
 // Initialize SQLite once
 let db;
 
-(async () => {
-  try {
-    db = await initDB();
-    app.set('db', db);
-    console.log('SQLite initialized');
-  } catch (err) {
-    console.error('SQLite initialization error:', err);
-    process.exit(1);
-  }
-})();
+async function initDB() {
+  db = await open({
+    filename: path.resolve('server/data/spotify.db'),
+    driver: sqlite3.Database
+  });
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS tracks (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      artist TEXT,
+      album TEXT
+    )
+  `);
+  console.log('SQLite initialized');
+}
 
-// Test route to confirm DB works
-app.get('/test-db', async (req, res) => {
-  try {
-    const rows = await db.all('SELECT name FROM tracks LIMIT 1');
-    res.json(rows);
-  } catch (err) {
-    console.error(err);
-    res.status(500).send('DB error');
-  }
+initDB().catch(err => {
+  console.error('DB init error:', err);
+  process.exit(1);
 });
 
 // Routers
 app.use('/auth', authRouter);
+
+app.get('/health', (req, res) => res.send('OK'));
 
 // Serve frontend
 app.use(express.static(path.resolve(__dirname, '../dist')));
@@ -50,5 +51,5 @@ app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../dist/index.html'));
 });
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
