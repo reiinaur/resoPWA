@@ -2,10 +2,9 @@ import express from 'express';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import querystring from 'querystring';
-import { initDB } from './db.js';
+import { setupDB } from './db.js';
 
 dotenv.config();
-
 const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
@@ -17,10 +16,10 @@ router.get('/login', (req, res) => {
     scope: scopes,
     redirect_uri: redirectUri
   });
-  res.redirect(`https://accounts.spotify.com/authorize?${params}`);
+  const spotifyUrl = `https://accounts.spotify.com/authorize?${params}`;
+  console.log('Redirecting to Spotify:', spotifyUrl);
+  res.redirect(spotifyUrl);
 });
-
-console.log('REDIRECT_URI:', redirectUri)
 
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
@@ -51,9 +50,8 @@ router.get('/callback', async (req, res) => {
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
-
     const tracksData = await tracksRes.json();
-    const db = await initDB();
+    const db = await setupDB();
 
     for (let item of tracksData.items) {
       const t = item.track;
@@ -63,6 +61,8 @@ router.get('/callback', async (req, res) => {
       );
     }
 
+    console.log('Tracks inserted:', tracksData.items.length);
+
     res.redirect(process.env.FRONTEND_RESULTS_URL);
 
   } catch (err) {
@@ -70,12 +70,5 @@ router.get('/callback', async (req, res) => {
     res.status(500).send('Error during callback');
   }
 });
-
-router.get('/tracks', async (req, res) => {
-  const db = await initDB();
-  const rows = await db.all('SELECT * FROM tracks');
-  res.json(rows);
-});
-
 
 export default router;
