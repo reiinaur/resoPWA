@@ -4,8 +4,7 @@ import path from 'path';
 import { fileURLToPath } from 'url';
 import cors from 'cors';
 import authRouter from './auth.js';
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
+import { initDB } from './db.js';
 
 dotenv.config();
 
@@ -16,31 +15,22 @@ const __dirname = path.dirname(__filename);
 
 app.use(express.json());
 app.use(cors({ origin: true, credentials: true }));
-app.use('/auth', authRouter);
 
-// --- SQLite setup ---
+// Initialize SQLite once
 let db;
+
 (async () => {
   try {
-    db = await open({
-      filename: path.resolve(__dirname, '.database/spotify.db'),
-      driver: sqlite3.Database,
-    });
-    await db.exec(`
-      CREATE TABLE IF NOT EXISTS tracks (
-        id TEXT PRIMARY KEY,
-        name TEXT,
-        artist TEXT,
-        album TEXT
-      )
-    `);
+    db = await initDB();
+    app.set('db', db);
     console.log('SQLite initialized');
   } catch (err) {
     console.error('SQLite initialization error:', err);
+    process.exit(1);
   }
 })();
 
-// --- TEST ROUTE ---
+// Test route to confirm DB works
 app.get('/test-db', async (req, res) => {
   try {
     const rows = await db.all('SELECT name FROM tracks LIMIT 1');
@@ -51,7 +41,10 @@ app.get('/test-db', async (req, res) => {
   }
 });
 
-// --- Static frontend ---
+// Routers
+app.use('/auth', authRouter);
+
+// Serve frontend
 app.use(express.static(path.resolve(__dirname, '../dist')));
 app.get('*', (req, res) => {
   res.sendFile(path.resolve(__dirname, '../dist/index.html'));

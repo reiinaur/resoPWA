@@ -2,42 +2,21 @@ import express from 'express';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import querystring from 'querystring';
-import sqlite3 from 'sqlite3';
-import { open } from 'sqlite';
-import path from 'path';
-import { fileURLToPath } from 'url';
 
 dotenv.config();
 
 const router = express.Router();
-const redirectUri = process.env.REDIRECT_URI; // use the tunnel URL
-
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-
-// Open SQLite
-let db;
-try {
-  db = await open({
-    filename: path.resolve(__dirname, '.database/spotify.db'),
-    driver: sqlite3.Database,
-  });
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS tracks (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      artist TEXT,
-      album TEXT
-    )
-  `);
-} catch (err) {
-  console.error('SQLite initialization error:', err);
-  process.exit(1); // Crash safely so Railway log shows error
-}
+const redirectUri = process.env.REDIRECT_URI;
 
 const scopes = 'user-library-read playlist-read-private';
 
-// Step 1: redirect user to Spotify login
+// Attach shared DB to req
+router.use((req, res, next) => {
+  req.db = req.app.get('db');
+  next();
+});
+
+// Step 1 — redirect user to Spotify login
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -49,7 +28,7 @@ router.get('/login', (req, res) => {
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
-// Step 2: Spotify callback
+// Step 2 — Spotify callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
 
@@ -81,15 +60,15 @@ router.get('/callback', async (req, res) => {
 
     const tracksData = await tracksRes.json();
 
+    // Save tracks into shared SQLite DB
     for (let item of tracksData.items) {
       const t = item.track;
-      await db.run(
+      await req.db.run(
         `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
         [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
       );
     }
 
-    // Redirect frontend results page (update if you deploy frontend)
     res.redirect('https://resopwa-production.up.railway.app/results');
   } catch (err) {
     console.error(err);
