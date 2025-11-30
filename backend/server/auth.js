@@ -2,13 +2,35 @@ import express from 'express';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import querystring from 'querystring';
-import { setupDB } from './db.js';
+import { open } from 'sqlite';
+import sqlite3 from 'sqlite3';
+import path from 'path';
+import { fileURLToPath } from 'url';
 
 dotenv.config();
 const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
 
+// Setup SQLite DB
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const dbPath = path.join(__dirname, 'db.sqlite');
+
+async function setupDB() {
+  const db = await open({ filename: dbPath, driver: sqlite3.Database });
+  await db.exec(`
+    CREATE TABLE IF NOT EXISTS tracks (
+      id TEXT PRIMARY KEY,
+      name TEXT,
+      artist TEXT,
+      album TEXT
+    )
+  `);
+  return db;
+}
+
+// Login route
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -21,6 +43,7 @@ router.get('/login', (req, res) => {
   res.redirect(spotifyUrl);
 });
 
+// Callback route
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
   if (!code) return res.send('No code received');
@@ -30,6 +53,7 @@ router.get('/callback', async (req, res) => {
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
     ).toString('base64');
 
+    // Get access token
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -44,19 +68,19 @@ router.get('/callback', async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
-    console.log('Token response:', tokenData); // <-- log token response
+    console.log('Token response:', tokenData);
 
-    const accessToken = tokenData.access_token;
-    if (!accessToken) return res.send('Token error');
+    if (!tokenData.access_token) return res.send('Token error');
 
+    // Fetch tracks
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
-      headers: { Authorization: `Bearer ${accessToken}` }
+      headers: { Authorization: `Bearer ${tokenData.access_token}` }
     });
 
     if (!tracksRes.ok) {
-      const errorText = await tracksRes.text();
-      console.error('Error fetching tracks:', errorText);
-      return res.status(500).send('Failed to fetch tracks from Spotify');
+      const errText = await tracksRes.text();
+      console.error('Failed to fetch tracks:', errText);
+      return res.status(500).send('Failed to fetch tracks');
     }
 
     const tracksData = await tracksRes.json();
@@ -75,33 +99,31 @@ router.get('/callback', async (req, res) => {
       };
       trackList.push(trackObj);
 
+      // Optional: store in SQLite
       await db.run(
         `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
         [trackObj.id, trackObj.name, trackObj.artist, trackObj.album]
       );
     }
 
+    // Safe localStorage injection and redirect
     res.send(`
-    <html>
-      <head>
-        <script>
-          // safe: tracks is a JS array
-          const tracks = ${JSON.stringify(trackList)};
-          // store as JSON string in localStorage
-          localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
-          // redirect to frontend results page
-          window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
-        </script>
-      </head>
-      <body>
-        Redirecting to results...
-      </body>
-    </html>
-  `);
-
+      <html>
+        <head>
+          <script>
+            const tracks = ${JSON.stringify(trackList)};
+            localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
+            window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
+          </script>
+        </head>
+        <body>
+          Redirecting to results...
+        </body>
+      </html>
+    `);
 
   } catch (err) {
-    console.error('Spotify callback error:', err); // <-- detailed log
+    console.error('Spotify callback error:', err);
     res.status(500).send('Error during callback: ' + err.message);
   }
 });
