@@ -544,4 +544,30 @@ router.get('/health', (req, res) => {
   });
 });
 
+router.get('/debug-user', async (req, res) => {
+  try {
+    const usersResult = await pool.query('SELECT * FROM users ORDER BY updated_at DESC LIMIT 1');
+    const hasUser = usersResult.rows.length > 0;
+    
+    const tracksResult = await pool.query('SELECT COUNT(*) as count FROM tracks');
+    const trackCount = tracksResult.rows[0].count;
+    
+    res.json({
+      has_user: hasUser,
+      user_data: hasUser ? {
+        display_name: usersResult.rows[0].display_name,
+        last_updated: usersResult.rows[0].updated_at
+      } : null,
+      track_count: trackCount,
+      environment: {
+        client_id_set: !!process.env.SPOTIFY_CLIENT_ID,
+        client_secret_set: !!process.env.SPOTIFY_CLIENT_SECRET,
+        redirect_uri: process.env.REDIRECT_URI
+      }
+    });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 export default router;
