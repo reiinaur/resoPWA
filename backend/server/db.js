@@ -7,7 +7,7 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 export async function initDB() {
-  const dbPath = path.join(__dirname, 'db.sqlite');
+  const dbPath = path.join(__dirname, 'db.sqlite'); 
   return open({
     filename: dbPath,
     driver: sqlite3.Database
