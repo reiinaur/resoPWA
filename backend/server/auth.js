@@ -71,4 +71,11 @@ router.get('/callback', async (req, res) => {
   }
 });
 
+router.get('/tracks', async (req, res) => {
+  const db = await initDB();
+  const rows = await db.all('SELECT * FROM tracks');
+  res.json(rows);
+});
+
+
 export default router;
