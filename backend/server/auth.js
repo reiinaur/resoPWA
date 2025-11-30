@@ -1,36 +1,17 @@
+// server/auth.js
 import express from 'express';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import querystring from 'querystring';
-import { open } from 'sqlite';
-import sqlite3 from 'sqlite3';
-import path from 'path';
-import { fileURLToPath } from 'url';
+import pool from './db.js';
 
 dotenv.config();
+
 const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
 
-// SQLite setup
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
-const dbPath = path.join(__dirname, 'db.sqlite');
-
-async function setupDB() {
-  const db = await open({ filename: dbPath, driver: sqlite3.Database });
-  await db.exec(`
-    CREATE TABLE IF NOT EXISTS tracks (
-      id TEXT PRIMARY KEY,
-      name TEXT,
-      artist TEXT,
-      album TEXT
-    )
-  `);
-  return db;
-}
-
-// Login route
+// Step 1: redirect to Spotify login
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -38,10 +19,11 @@ router.get('/login', (req, res) => {
     scope: scopes,
     redirect_uri: redirectUri
   });
+
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
-// Callback route
+// Step 2: Spotify callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
   if (!code) return res.send('No code received');
@@ -51,7 +33,7 @@ router.get('/callback', async (req, res) => {
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
     ).toString('base64');
 
-    // Get access token
+    // Exchange code for access token
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -66,65 +48,45 @@ router.get('/callback', async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
-    if (!tokenData.access_token) return res.send('Token error');
+    const accessToken = tokenData.access_token;
+    if (!accessToken) return res.send('Token error');
 
-    // Fetch user tracks
+    // Fetch user's saved tracks
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
-      headers: { Authorization: `Bearer ${tokenData.access_token}` }
+      headers: { Authorization: `Bearer ${accessToken}` }
     });
-
-    if (!tracksRes.ok) {
-      const errText = await tracksRes.text();
-      console.error('Failed to fetch tracks:', errText);
-      return res.status(500).send('Failed to fetch tracks');
-    }
 
     const tracksData = await tracksRes.json();
-    const trackList = tracksData.items.map(item => {
+    console.log('Fetched tracks count:', tracksData.items.length);
+
+    // Save tracks to PostgreSQL
+    for (let item of tracksData.items) {
       const t = item.track;
-      return {
-        id: t.id,
-        name: t.name,
-        artist: t.artists.map(a => a.name).join(', '),
-        album: t.album.name
-      };
-    });
+      await pool.query(
+        `INSERT INTO tracks(id, name, artist, album)
+         VALUES ($1, $2, $3, $4)
+         ON CONFLICT(id) DO UPDATE SET name = $2, artist = $3, album = $4`,
+        [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
+      );
+    }
 
-    // Send HTML immediately
-    res.send(`
-      <html>
-        <head>
-          <script>
-            const tracks = ${JSON.stringify(trackList).replace(/'/g, "\\'")};
-            localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
-            window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
-          </script>
-        </head>
-        <body>
-          Redirecting to results...
-        </body>
-      </html>
-    `);
-
-    // Async SQLite save
-    (async () => {
-      try {
-        const db = await setupDB();
-        for (const t of trackList) {
-          await db.run(
-            `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
-            [t.id, t.name, t.artist, t.album]
-          );
-        }
-        console.log('Tracks saved to SQLite.');
-      } catch (err) {
-        console.error('SQLite async error:', err);
-      }
-    })();
+    console.log('Tracks saved to PostgreSQL.');
+    res.redirect(process.env.FRONTEND_RESULTS_URL);
 
   } catch (err) {
     console.error('Spotify callback error:', err);
-    res.status(500).send('Error during callback: ' + err.message);
+    res.status(500).send('Error during callback');
+  }
+});
+
+// Step 3: endpoint for frontend to fetch tracks
+router.get('/tracks', async (req, res) => {
+  try {
+    const result = await pool.query('SELECT * FROM tracks');
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Error fetching tracks:', err);
+    res.status(500).send('Error fetching tracks');
   }
 });
 
