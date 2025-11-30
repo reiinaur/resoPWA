@@ -1,12 +1,12 @@
-import './app.css'
-import { Home } from './pages/home'
-import { Results } from './pages/results'
-import { Details } from './pages/details'
-import { Explore } from './pages/explore'
-import { Layout } from './layout'
+import './app.css';
+import { Home } from './pages/home';
+import { Results } from './pages/results';
+import { Details } from './pages/details';
+import { Explore } from './pages/explore';
+import { Layout } from './layout';
 
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom'
-import { MusicPlayer } from './components/musicPlayer'
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import MusicPlayer from './components/musicPlayer';
 
 function  App() {
 
