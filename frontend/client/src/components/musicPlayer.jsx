@@ -3,12 +3,10 @@ import './musicPlayer.css';
 
 const MusicPlayer = () => {
   const [isPlaying, setIsPlaying] = useState(false);
-  const [isExpanded, setIsExpanded] = useState(false);
   const [currentSongIndex, setCurrentSongIndex] = useState(0);
   const [volume, setVolume] = useState(70);
   const [currentTime, setCurrentTime] = useState(0);
-  
-  const audioRef = useRef(null);
+  const [showPlayer, setShowPlayer] = useState(false);
   
   const songs = [
     { 
@@ -38,80 +36,34 @@ const MusicPlayer = () => {
       artist: "Artist One", 
       duration: 180,
       playlist: "Win"
-    },
-    { 
-      id: 5, 
-      title: "Song Two", 
-      artist: "Artist Two", 
-      duration: 195,
-      playlist: "Win"
-    },
-    { 
-      id: 6, 
-      title: "Rolling Beat", 
-      artist: "DJ Wave", 
-      duration: 210,
-      playlist: "9K Roll"
-    },
-    { 
-      id: 7, 
-      title: "Night Drive", 
-      artist: "Synth Master", 
-      duration: 225,
-      playlist: "9K Roll"
     }
-  ];
-
-  const playlists = [
-    { name: "Win", songCount: 24 },
-    { name: "9K Roll", songCount: 8 },
-    { name: "9K Roll", songCount: 22 },
-    { name: "9K Roll", songCount: 11 },
-    { name: "9K Roll", songCount: 14 },
-    { name: "Blinding Lights", songCount: 3 }
   ];
 
   const playSong = (index) => {
     setCurrentSongIndex(index);
     setIsPlaying(true);
-    
-    // In a real app, you would load and play the actual audio file
-    // audioRef.current.src = songs[index].audioUrl;
-    // audioRef.current.play();
-    
+    setShowPlayer(true);
     console.log(`Now playing: ${songs[index].title} by ${songs[index].artist}`);
   };
 
   const togglePlayPause = () => {
     setIsPlaying(!isPlaying);
-    
-    if (isPlaying) {
-      // audioRef.current.pause();
-      console.log("Playback paused");
-    } else {
-      // audioRef.current.play();
-      console.log("Playback resumed");
-    }
   };
 
   const playNextSong = () => {
     const nextIndex = (currentSongIndex + 1) % songs.length;
-    playSong(nextIndex);
+    setCurrentSongIndex(nextIndex);
+    setIsPlaying(true);
   };
 
   const playPrevSong = () => {
     const prevIndex = (currentSongIndex - 1 + songs.length) % songs.length;
-    playSong(prevIndex);
+    setCurrentSongIndex(prevIndex);
+    setIsPlaying(true);
   };
 
   const handleVolumeChange = (e) => {
-    const newVolume = parseInt(e.target.value);
-    setVolume(newVolume);
-    
-    // In a real app, you would set the audio volume
-    // if (audioRef.current) {
-    //   audioRef.current.volume = newVolume / 100;
-    // }
+    setVolume(parseInt(e.target.value));
   };
 
   const formatTime = (seconds) => {
@@ -120,22 +72,15 @@ const MusicPlayer = () => {
     return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const getSongsByPlaylist = (playlistName) => {
-    return songs.filter(song => song.playlist === playlistName);
-  };
-
-  const getUniquePlaylists = () => {
-    const uniqueNames = [...new Set(playlists.map(playlist => playlist.name))];
-    return uniqueNames.map(name => {
-      const playlist = playlists.find(p => p.name === name);
-      return { name, songCount: playlist.songCount };
-    });
+  const closePlayer = () => {
+    setShowPlayer(false);
+    setIsPlaying(false);
   };
 
   // Simulate progress update
   useEffect(() => {
     let interval;
-    if (isPlaying) {
+    if (isPlaying && showPlayer) {
       interval = setInterval(() => {
         setCurrentTime(prev => {
           if (prev >= songs[currentSongIndex].duration) {
@@ -148,107 +93,91 @@ const MusicPlayer = () => {
     }
     
     return () => clearInterval(interval);
-  }, [isPlaying, currentSongIndex]);
+  }, [isPlaying, currentSongIndex, showPlayer]);
 
   const currentSong = songs[currentSongIndex] || { title: "No song selected", artist: "-", duration: 0 };
 
   return (
     <div className="music-app">
-      <div className="container">
-        <header>
-          <h1>My Music Collection</h1>
-          <p>Click the play button next to any song to start listening</p>
-        </header>
-
-        <div className="playlists">
-          {getUniquePlaylists().map((playlist, index) => (
-            <div key={index} className="playlist">
-              <h2>{playlist.name} ({playlist.songCount} songs)</h2>
-              <ul className="song-list">
-                {getSongsByPlaylist(playlist.name).map((song) => (
-                  <li key={song.id} className="song-item">
-                    <div className="song-info">
-                      <div className="song-title">{song.title}</div>
-                      <div className="song-artist">{song.artist}</div>
-                    </div>
-                    <button 
-                      className="play-btn"
-                      onClick={() => playSong(songs.findIndex(s => s.id === song.id))}
-                    >
-                      ▶
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          ))}
+      {/* Footer Music Bar */}
+      <div className="music-bar">
+        <div className="bar-content">
+          <div className="now-playing">
+            <span className="bar-song">{currentSong.title}</span>
+            <span className="bar-artist">{currentSong.artist}</span>
+          </div>
+          <button 
+            className="open-player-btn"
+            onClick={() => setShowPlayer(true)}
+            disabled={!currentSong.title}
+          >
+            Open Player
+          </button>
         </div>
       </div>
 
-      {/* Hidden audio element for actual implementation */}
-      <audio ref={audioRef} />
-
-      {/* Music Player */}
-      <div className={`music-player ${isExpanded ? 'expanded' : ''}`}>
-        <div className="player-footer">
-          <div className="player-left">
-            <button 
-              className="expand-btn"
-              onClick={() => setIsExpanded(!isExpanded)}
-            >
-              {isExpanded ? '▼' : '▲'}
-            </button>
-            <div className="song-details">
-              <div className="song-name">{currentSong.title}</div>
-              <div className="artist-name">{currentSong.artist}</div>
+      {/* Floating Music Player Popup */}
+      {showPlayer && (
+        <div className="music-popup">
+          <div className="popup-content">
+            {/* Header with close button */}
+            <div className="popup-header">
+              <button className="close-btn" onClick={closePlayer}>×</button>
             </div>
-          </div>
-          <div className="volume-control">
-            <span>🔊</span>
-            <input 
-              type="range" 
-              className="volume-slider" 
-              min="0" 
-              max="100" 
-              value={volume}
-              onChange={handleVolumeChange}
-            />
+            
+            {/* Album Art - Spinning CD */}
+            <div className={`album-art ${isPlaying ? 'spinning' : ''}`}>
+              <div className="cd-center"></div>
+            </div>
+            
+            {/* Song Info */}
+            <div className="song-info-popup">
+              <h2 className="popup-song-title">{currentSong.title}</h2>
+              <p className="popup-song-artist">{currentSong.artist}</p>
+            </div>
+            
+            {/* Progress Bar */}
+            <div className="progress-section">
+              <div className="progress-bar-popup">
+                <div 
+                  className="progress-fill" 
+                  style={{ width: `${(currentTime / currentSong.duration) * 100}%` }}
+                ></div>
+              </div>
+              <div className="time-display">
+                <span>{formatTime(currentTime)}</span>
+                <span>{formatTime(currentSong.duration)}</span>
+              </div>
+            </div>
+            
+            {/* Controls */}
+            <div className="controls-popup">
+              <button className="control-btn prev" onClick={playPrevSong}>
+                ⏮
+              </button>
+              <button className="control-btn play-pause" onClick={togglePlayPause}>
+                {isPlaying ? '⏸' : '▶'}
+              </button>
+              <button className="control-btn next" onClick={playNextSong}>
+                ⏭
+              </button>
+            </div>
+            
+            {/* Volume Control */}
+            <div className="volume-popup">
+              <span>🔊</span>
+              <input 
+                type="range" 
+                className="volume-slider-popup" 
+                min="0" 
+                max="100" 
+                value={volume}
+                onChange={handleVolumeChange}
+              />
+            </div>
           </div>
         </div>
-        
-        <div className="player-expanded">
-          <div className="album-art">♪</div>
-          <div className="expanded-song-details">
-            <div className="expanded-song-name">{currentSong.title}</div>
-            <div className="expanded-artist-name">{currentSong.artist}</div>
-          </div>
-          
-          <div className="progress-container">
-            <div className="progress-bar">
-              <div 
-                className="progress" 
-                style={{ width: `${(currentTime / currentSong.duration) * 100}%` }}
-              ></div>
-            </div>
-            <div className="time-info">
-              <span className="current-time">{formatTime(currentTime)}</span>
-              <span className="total-time">{formatTime(currentSong.duration)}</span>
-            </div>
-          </div>
-          
-          <div className="player-controls">
-            <button className="control-btn prev-btn" onClick={playPrevSong}>
-              ⏮
-            </button>
-            <button className="control-btn play-pause" onClick={togglePlayPause}>
-              {isPlaying ? '⏸' : '▶'}
-            </button>
-            <button className="control-btn next-btn" onClick={playNextSong}>
-              ⏭
-            </button>
-          </div>
-        </div>
-      </div>
+      )}
     </div>
   );
 };
