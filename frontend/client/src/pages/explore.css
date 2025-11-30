@@ -15,7 +15,7 @@
 .explore-title {
   font-size: 2.5rem;
   margin-bottom: 10px;
-  color: #1DB954;
+  color: #ffe4ed;
   font-weight: bold;
 }
 
@@ -51,7 +51,7 @@
 }
 
 .search-input:focus {
-  border-color: #1DB954;
+  border-color: #ffe4ed;
   box-shadow: 0 0 0 3px rgba(29, 185, 84, 0.1);
 }
 
@@ -60,7 +60,7 @@
   right: 10px;
   top: 50%;
   transform: translateY(-50%);
-  background-color: #1DB954;
+  background-color: #ffe4ed;
   color: white;
   border: none;
   border-radius: 20px;
@@ -96,15 +96,15 @@
 }
 
 .search-category:hover {
-  border-color: #1DB954;
-  color: #1DB954;
+  border-color: #ffe4ed;
+  color: #ffe4ed;
   background-color: #f8fff9;
 }
 
 .search-category.active {
-  background-color: #1DB954;
+  background-color: #ffe4ed;
   color: white;
-  border-color: #1DB954;
+  border-color: #ffe4ed;
 }
 
 /* Content Sections */
@@ -155,7 +155,7 @@
 .track-image-placeholder {
   width: 60px;
   height: 60px;
-  background: linear-gradient(135deg, #1DB954, #1ed760);
+  background: linear-gradient(135deg, #ffe4ed, #1ed760);
   border-radius: 8px;
   display: flex;
   align-items: center;
@@ -299,7 +299,7 @@
   border-radius: 50%;
   margin: 0 auto 15px;
   object-fit: cover;
-  border: 3px solid #1DB954;
+  border: 3px solid #ffe4ed;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
@@ -314,7 +314,7 @@
   justify-content: center;
   font-size: 1.8rem;
   color: white;
-  border: 3px solid #1DB954;
+  border: 3px solid #ffe4ed;
   box-shadow: 0 4px 15px rgba(0,0,0,0.1);
 }
 
@@ -381,10 +381,10 @@
 
 .view-all-btn {
   padding: 10px 24px;
-  border: 2px solid #1DB954;
+  border: 2px solid #ffe4ed;
   border-radius: 25px;
   background-color: transparent;
-  color: #1DB954;
+  color: #ffe4ed;
   cursor: pointer;
   font-size: 0.9rem;
   font-weight: 600;
@@ -392,7 +392,7 @@
 }
 
 .view-all-btn:hover {
-  background-color: #1DB954;
+  background-color: #ffe4ed;
   color: white;
   transform: translateY(-2px);
   box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);

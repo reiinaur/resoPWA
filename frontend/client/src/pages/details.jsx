@@ -84,7 +84,7 @@ export function Details() {
           <div style={{
             width: '250px',
             height: '250px',
-            backgroundColor: '#1DB954',
+            backgroundColor: '#ffe4ed',
             borderRadius: '10px',
             display: 'flex',
             alignItems: 'center',
@@ -97,7 +97,7 @@ export function Details() {
         )}
         
         <div>
-          <p style={{ margin: '0 0 10px 0', color: '#1DB954', fontWeight: 'bold' }}>
+          <p style={{ margin: '0 0 10px 0', color: '#ffe4ed', fontWeight: 'bold' }}>
             PLAYLIST
           </p>
           <h1 style={{ fontSize: '3rem', margin: '0 0 10px 0' }}>

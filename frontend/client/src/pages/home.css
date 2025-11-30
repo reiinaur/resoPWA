@@ -1,9 +1,12 @@
 /* Home.css - Updated */
 .home-container {
   padding: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
   max-width: 1200px;
   margin: 0 auto;
-  min-height: 80vh;
+  min-height: 100vh;
 }
 
 /* Header Styles */
@@ -14,7 +17,7 @@
 .home-title {
   font-size: 2.5rem;
   margin-bottom: 10px;
-  color: #1DB954;
+  color: #ffe4ed;
   font-weight: bold;
 }
 
@@ -31,7 +34,7 @@
 
 .explore-btn {
   padding: 12px 24px;
-  background: linear-gradient(135deg, #1DB954, #1ed760);
+  background: #ffe4ed;
   color: white;
   border: none;
   border-radius: 25px;
@@ -88,7 +91,7 @@
 
 .reconnect-btn {
   padding: 10px 20px;
-  background-color: #1DB954;
+  background-color: #ffe4ed;
   color: white;
   border: none;
   border-radius: 25px;
@@ -179,7 +182,7 @@
 .playlist-image-placeholder {
   width: 100%;
   aspect-ratio: 1;
-  background-color: #1DB954;
+  background-color: #ffe4ed;
   border-radius: 8px;
   margin-bottom: 15px;
   display: flex;

@@ -92,8 +92,8 @@ export function Home() {
     <div className="home-container">
       {/* Header */}
       <header className="home-header">
-        <h1 className="home-title">My Music Dashboard</h1>
-        <p className="home-subtitle">Your personal Spotify collection</p>
+        <h1 className="home-title">resonance</h1>
+        <p className="home-subtitle">arisha's personal spotify collection</p>
         
         {error && (
           <div className="error-banner">
@@ -108,7 +108,7 @@ export function Home() {
       {/* Quick Actions */}
       <div className="quick-actions">
         <button className="explore-btn" onClick={navigateToExplore}>
-          🎵 Explore Your Music
+          explore
         </button>
       </div>
 
