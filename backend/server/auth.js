@@ -85,9 +85,11 @@ router.get('/callback', async (req, res) => {
     <html>
       <head>
         <script>
-          // store tracks safely
+          // safe: tracks is a JS array
           const tracks = ${JSON.stringify(trackList)};
+          // store as JSON string in localStorage
           localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
+          // redirect to frontend results page
           window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
         </script>
       </head>
