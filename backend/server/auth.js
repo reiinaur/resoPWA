@@ -74,18 +74,19 @@ router.get('/callback', async (req, res) => {
     console.log('Fetched tracks:', trackList.length);
 
     res.send(`
-      <html>
-        <head>
-          <script>
-            localStorage.setItem('spotifyTracks', '${JSON.stringify(trackList)}');
-            window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
-          </script>
-        </head>
-        <body>
-          Redirecting to results...
-        </body>
-      </html>
-    `);
+    <html>
+      <head>
+        <script>
+          const tracks = ${JSON.stringify(trackList)};
+          localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
+          window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
+        </script>
+      </head>
+      <body>
+        Redirecting to results...
+      </body>
+    </html>
+  `);
 
   } catch (err) {
     console.error('Spotify callback error:', err);
