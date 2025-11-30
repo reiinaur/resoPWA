@@ -8,7 +8,7 @@ dotenv.config();
 
 const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
-const scopes = 'user-library-read playlist-read-private user-read-private user-read-email';
+const scopes = 'user-library-read playlist-read-private user-read-private user-read-email user-top-read user-read-recently-played';
 
 async function getMyAccessToken() {
   try {
@@ -35,8 +35,29 @@ async function getMyAccessToken() {
     
     return tokenData.access_token;
   } catch (err) {
-    console.error('Error getting access token:', err);
+    console.error('Error getting app access token:', err);
     throw err;
+  }
+}
+
+async function getUserAccessToken() {
+  try {
+    const result = await pool.query(`
+      SELECT access_token FROM users 
+      ORDER BY updated_at DESC 
+      LIMIT 1
+    `);
+    
+    if (result.rows.length > 0) {
+      console.log('Found user access token in database');
+      return result.rows[0].access_token;
+    } else {
+      console.log('No user token found, using app authentication');
+      return await getMyAccessToken();
+    }
+  } catch (err) {
+    console.error('Error getting user access token:', err);
+    return await getMyAccessToken();
   }
 }
 
@@ -49,7 +70,7 @@ router.get('/login', (req, res) => {
     state: 'some_random_state_string'
   });
 
-  res.redirect(`https://accounts.spotify.com/authorize?${params}`);
+  res.redirect(`https://accounts.spotify.com/api/token?${params}`);
 });
 
 router.get('/callback', async (req, res) => {
@@ -118,9 +139,8 @@ router.get('/callback', async (req, res) => {
     );
 
     let savedCount = 0;
-    let nextUrl = 'https://api.spotify.com/v1/me/tracks?limit=50';
     
-    const tracksRes = await fetch(nextUrl, {
+    const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
     
@@ -150,107 +170,41 @@ router.get('/callback', async (req, res) => {
   }
 });
 
-router.get('/my-playlists', async (req, res) => {
-  try {
-    const accessToken = await getMyAccessToken();
-    
-    const userRes = await fetch('https://api.spotify.com/v1/me', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-    
-    if (!userRes.ok) {
-      throw new Error('Failed to fetch user profile - app may need reauthentication');
-    }
-    
-    const userData = await userRes.json();
-    const userId = userData.id;
-    
-    const playlistsRes = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists?limit=50`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!playlistsRes.ok) {
-      throw new Error('Failed to fetch user playlists');
-    }
-
-    const playlistsData = await playlistsRes.json();
-    
-    const formattedPlaylists = playlistsData.items.map(playlist => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      tracks: playlist.tracks.total,
-      image: playlist.images[0]?.url,
-      owner: playlist.owner.display_name,
-      public: playlist.public
-    }));
-
-    console.log(`Fetched ${formattedPlaylists.length} playlists for user ${userData.display_name}`);
-    res.json(formattedPlaylists);
-
-  } catch (err) {
-    console.error('Error fetching user playlists:', err);
-    
-    try {
-      console.log('Falling back to featured playlists');
-      const accessToken = await getMyAccessToken();
-      const playlistsRes = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=20', {
-        headers: { Authorization: `Bearer ${accessToken}` }
-      });
-
-      if (!playlistsRes.ok) {
-        throw new Error('Featured playlists also failed');
-      }
-
-      const playlistsData = await playlistsRes.json();
-      const formattedPlaylists = playlistsData.playlists.items.map(playlist => ({
-        id: playlist.id,
-        name: playlist.name,
-        description: playlist.description,
-        tracks: playlist.tracks.total,
-        image: playlist.images[0]?.url,
-        owner: playlist.owner.display_name
-      }));
-
-      console.log(`Fetched ${formattedPlaylists.length} featured playlists as fallback`);
-      res.json(formattedPlaylists);
-    } catch (fallbackErr) {
-      console.error('Fallback also failed:', fallbackErr);
-      res.status(500).json({ 
-        error: 'Unable to load playlists. Please reconnect your Spotify account.',
-        details: fallbackErr.message 
-      });
-    }
-  }
-});
-
 router.get('/song-of-day', async (req, res) => {
   try {
+    const today = new Date().toISOString().split('T')[0];
+    
     const result = await pool.query(`
       SELECT * FROM tracks 
-      ORDER BY RANDOM() 
+      ORDER BY MD5(id || $1) 
       LIMIT 1
-    `);
+    `, [today]);
     
     if (result.rows.length > 0) {
+      console.log(`Song of the day for ${today}:`, result.rows[0].name);
       res.json(result.rows[0]);
     } else {
       try {
-        const accessToken = await getMyAccessToken();
-        const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
+        const accessToken = await getUserAccessToken();
+        const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
           headers: { Authorization: `Bearer ${accessToken}` }
         });
         
         if (tracksRes.ok) {
           const tracksData = await tracksRes.json();
           if (tracksData.items && tracksData.items.length > 0) {
-            const track = tracksData.items[0].track;
+            const randomIndex = Math.abs(
+              today.split('-').reduce((a, b) => a + parseInt(b), 0)
+            ) % tracksData.items.length;
+            
+            const track = tracksData.items[randomIndex].track;
             const songOfDay = {
               id: track.id,
               name: track.name,
               artist: track.artists.map(a => a.name).join(', '),
               album: track.album.name
             };
+            console.log(`Spotify fallback song of the day for ${today}:`, songOfDay.name);
             res.json(songOfDay);
           } else {
             res.json(null);
@@ -269,10 +223,249 @@ router.get('/song-of-day', async (req, res) => {
   }
 });
 
+router.get('/my-playlists', async (req, res) => {
+  try {
+    const accessToken = await getUserAccessToken();
+    
+    const playlistsRes = await fetch('https://api.spotify.com/v1/me/playlists?limit=50', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!playlistsRes.ok) {
+      console.log('User playlists failed, trying featured playlists');
+      const featuredRes = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=20', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!featuredRes.ok) {
+        throw new Error('Both user and featured playlists failed');
+      }
+
+      const featuredData = await featuredRes.json();
+      const formattedPlaylists = featuredData.playlists.items.map(playlist => ({
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        tracks: playlist.tracks.total,
+        image: playlist.images[0]?.url,
+        owner: playlist.owner.display_name
+      }));
+
+      console.log(`Fetched ${formattedPlaylists.length} featured playlists`);
+      return res.json(formattedPlaylists);
+    }
+
+    const playlistsData = await playlistsRes.json();
+    
+    const formattedPlaylists = playlistsData.items.map(playlist => ({
+      id: playlist.id,
+      name: playlist.name,
+      description: playlist.description,
+      tracks: playlist.tracks.total,
+      image: playlist.images[0]?.url,
+      owner: playlist.owner.display_name,
+      public: playlist.public
+    }));
+
+    console.log(`Fetched ${formattedPlaylists.length} user playlists`);
+    res.json(formattedPlaylists);
+
+  } catch (err) {
+    console.error('Error fetching playlists:', err);
+    res.status(500).json({ 
+      error: 'Unable to load playlists. Please reconnect your Spotify account.',
+      details: err.message 
+    });
+  }
+});
+
+router.get('/top-tracks', async (req, res) => {
+  try {
+    const accessToken = await getUserAccessToken();
+    
+    const tracksRes = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!tracksRes.ok) {
+      console.log('Top tracks failed, trying recently played');
+      const recentRes = await fetch('https://api.spotify.com/v1/me/player/recently-played?limit=10', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!recentRes.ok) {
+        const savedRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=10', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+
+        if (!savedRes.ok) {
+          throw new Error('All track endpoints failed');
+        }
+
+        const savedData = await savedRes.json();
+        const formattedTracks = savedData.items.map(item => ({
+          id: item.track.id,
+          name: item.track.name,
+          artist: item.track.artists.map(artist => artist.name).join(', '),
+          album: item.track.album.name,
+          image: item.track.album.images[0]?.url,
+          duration: item.track.duration_ms,
+          preview_url: item.track.preview_url
+        }));
+
+        console.log(`Fetched ${formattedTracks.length} saved tracks as fallback`);
+        return res.json(formattedTracks);
+      }
+
+      const recentData = await recentRes.json();
+      const formattedTracks = recentData.items.map(item => ({
+        id: item.track.id,
+        name: item.track.name,
+        artist: item.track.artists.map(artist => artist.name).join(', '),
+        album: item.track.album.name,
+        image: item.track.album.images[0]?.url,
+        duration: item.track.duration_ms,
+        preview_url: item.track.preview_url
+      }));
+
+      console.log(`Fetched ${formattedTracks.length} recently played tracks`);
+      return res.json(formattedTracks);
+    }
+
+    const tracksData = await tracksRes.json();
+    
+    const formattedTracks = tracksData.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists.map(artist => artist.name).join(', '),
+      album: track.album.name,
+      image: track.album.images[0]?.url,
+      duration: track.duration_ms,
+      preview_url: track.preview_url
+    }));
+
+    console.log(`Fetched ${formattedTracks.length} top tracks`);
+    res.json(formattedTracks);
+  } catch (err) {
+    console.error('Error fetching top tracks:', err);
+    res.status(500).json({ 
+      error: 'Unable to load top tracks',
+      details: err.message 
+    });
+  }
+});
+
+router.get('/top-artists', async (req, res) => {
+  try {
+    const accessToken = await getUserAccessToken();
+    
+    const artistsRes = await fetch('https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!artistsRes.ok) {
+      console.log('Top artists failed, trying artists from saved tracks');
+      const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!tracksRes.ok) {
+        throw new Error('All artist endpoints failed');
+      }
+
+      const tracksData = await tracksRes.json();
+      
+      const artistMap = new Map();
+      tracksData.items.forEach(item => {
+        item.track.artists.forEach(artist => {
+          if (!artistMap.has(artist.id)) {
+            artistMap.set(artist.id, {
+              id: artist.id,
+              name: artist.name,
+              image: null,
+              genres: [],
+              followers: 0
+            });
+          }
+        });
+      });
+
+      const formattedArtists = Array.from(artistMap.values()).slice(0, 10);
+      console.log(`Fetched ${formattedArtists.length} artists from saved tracks`);
+      return res.json(formattedArtists);
+    }
+
+    const artistsData = await artistsRes.json();
+    
+    const formattedArtists = artistsData.items.map(artist => ({
+      id: artist.id,
+      name: artist.name,
+      image: artist.images[0]?.url,
+      genres: artist.genres.slice(0, 3),
+      followers: artist.followers.total
+    }));
+
+    console.log(`Fetched ${formattedArtists.length} top artists`);
+    res.json(formattedArtists);
+  } catch (err) {
+    console.error('Error fetching top artists:', err);
+    res.status(500).json({ 
+      error: 'Unable to load top artists',
+      details: err.message 
+    });
+  }
+});
+
+router.get('/top-albums', async (req, res) => {
+  try {
+    const accessToken = await getUserAccessToken();
+    
+    const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!tracksRes.ok) {
+      throw new Error('Failed to fetch tracks for albums');
+    }
+
+    const tracksData = await tracksRes.json();
+    
+    const albumMap = new Map();
+    tracksData.items.forEach(item => {
+      const album = item.track.album;
+      if (!albumMap.has(album.id)) {
+        albumMap.set(album.id, {
+          id: album.id,
+          name: album.name,
+          artist: album.artists.map(artist => artist.name).join(', '),
+          image: album.images[0]?.url,
+          track_count: 1,
+          release_date: album.release_date
+        });
+      } else {
+        albumMap.get(album.id).track_count++;
+      }
+    });
+
+    const formattedAlbums = Array.from(albumMap.values())
+      .sort((a, b) => b.track_count - a.track_count)
+      .slice(0, 10);
+
+    console.log(`Fetched ${formattedAlbums.length} top albums`);
+    res.json(formattedAlbums);
+  } catch (err) {
+    console.error('Error fetching top albums:', err);
+    res.status(500).json({ 
+      error: 'Unable to load top albums',
+      details: err.message 
+    });
+  }
+});
+
 router.get('/playlist/:id', async (req, res) => {
   try {
     const playlistId = req.params.id;
-    const accessToken = await getMyAccessToken();
+    const accessToken = await getUserAccessToken();
 
     const playlistRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
       headers: { Authorization: `Bearer ${accessToken}` }
@@ -340,66 +533,6 @@ router.get('/search', async (req, res) => {
   } catch (err) {
     console.error('Search error:', err);
     res.status(500).json({ error: 'Error searching tracks' });
-  }
-});
-
-router.get('/top-tracks', async (req, res) => {
-  try {
-    const accessToken = await getMyAccessToken();
-    
-    const tracksRes = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!tracksRes.ok) {
-      throw new Error('Failed to fetch top tracks');
-    }
-
-    const tracksData = await tracksRes.json();
-    
-    const formattedTracks = tracksData.items.map(track => ({
-      id: track.id,
-      name: track.name,
-      artist: track.artists.map(artist => artist.name).join(', '),
-      album: track.album.name,
-      image: track.album.images[0]?.url,
-      duration: track.duration_ms,
-      preview_url: track.preview_url
-    }));
-
-    res.json(formattedTracks);
-  } catch (err) {
-    console.error('Error fetching top tracks:', err);
-    res.status(500).json({ error: 'Error fetching top tracks' });
-  }
-});
-
-router.get('/top-artists', async (req, res) => {
-  try {
-    const accessToken = await getMyAccessToken();
-    
-    const artistsRes = await fetch('https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!artistsRes.ok) {
-      throw new Error('Failed to fetch top artists');
-    }
-
-    const artistsData = await artistsRes.json();
-    
-    const formattedArtists = artistsData.items.map(artist => ({
-      id: artist.id,
-      name: artist.name,
-      image: artist.images[0]?.url,
-      genres: artist.genres.slice(0, 3),
-      followers: artist.followers.total
-    }));
-
-    res.json(formattedArtists);
-  } catch (err) {
-    console.error('Error fetching top artists:', err);
-    res.status(500).json({ error: 'Error fetching top artists' });
   }
 });
 
