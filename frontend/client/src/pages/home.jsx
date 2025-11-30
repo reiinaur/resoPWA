@@ -1,7 +1,8 @@
 export function Home() {
+  const backendUrl = import.meta.env.VITE_API_URL; // new backend URL
+
   const handleLogin = () => {
-    // Redirects to backend Spotify login
-    window.location.href = '/auth/login';
+   window.location.href = `${backendUrl}/auth/login`;
   };
 
   return (
