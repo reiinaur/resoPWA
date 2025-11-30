@@ -8,7 +8,37 @@ dotenv.config();
 
 const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
-const scopes = 'user-library-read playlist-read-private';
+const scopes = 'user-library-read playlist-read-private user-read-private user-read-email';
+
+async function getMyAccessToken() {
+  try {
+    const authHeader = Buffer.from(
+      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+    ).toString('base64');
+
+    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${authHeader}`
+      },
+      body: querystring.stringify({
+        grant_type: 'client_credentials'
+      })
+    });
+
+    const tokenData = await tokenRes.json();
+    
+    if (!tokenRes.ok) {
+      throw new Error(`Token error: ${tokenData.error}`);
+    }
+    
+    return tokenData.access_token;
+  } catch (err) {
+    console.error('Error getting access token:', err);
+    throw err;
+  }
+}
 
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
@@ -28,12 +58,12 @@ router.get('/callback', async (req, res) => {
   
   if (error) {
     console.error('Spotify auth error:', error);
-    return res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=auth_failed&message=${error}`);
+    return res.redirect(`${process.env.FRONTEND_URL}?error=auth_failed`);
   }
   
   if (!code) {
     console.error('No authorization code received');
-    return res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=no_code`);
+    return res.redirect(`${process.env.FRONTEND_URL}?error=no_code`);
   }
 
   try {
@@ -58,60 +88,225 @@ router.get('/callback', async (req, res) => {
     
     if (!tokenRes.ok) {
       console.error('Token error:', tokenData);
-      return res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=token_failed&message=${tokenData.error}`);
+      return res.redirect(`${process.env.FRONTEND_URL}?error=token_failed`);
     }
 
     const accessToken = tokenData.access_token;
-    if (!accessToken) {
-      return res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=no_token`);
-    }
-
-    const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
+    const refreshToken = tokenData.refresh_token;
     
-    if (!tracksRes.ok) {
-      console.error('Tracks fetch error:', await tracksRes.text());
-      return res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=fetch_tracks_failed`);
+    if (!accessToken) {
+      return res.redirect(`${process.env.FRONTEND_URL}?error=no_token`);
     }
-
-    const tracksData = await tracksRes.json();
-    console.log('Fetched tracks count:', tracksData.items?.length || 0);
 
     const userRes = await fetch('https://api.spotify.com/v1/me', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
+    
+    if (!userRes.ok) {
+      throw new Error('Failed to fetch user profile');
+    }
+    
     const userData = await userRes.json();
+    console.log('User authenticated:', userData.display_name, 'ID:', userData.id);
 
-    const userId = userData.id;
-    console.log('User authenticated:', userData.display_name, 'ID:', userId);
+    await pool.query(
+      `INSERT INTO users (spotify_id, access_token, refresh_token, display_name, email)
+       VALUES ($1, $2, $3, $4, $5)
+       ON CONFLICT (spotify_id) 
+       DO UPDATE SET access_token = $2, refresh_token = $3, display_name = $4, email = $5, updated_at = CURRENT_TIMESTAMP`,
+      [userData.id, accessToken, refreshToken, userData.display_name, userData.email]
+    );
 
     let savedCount = 0;
-    if (tracksData.items && tracksData.items.length > 0) {
-      for (let item of tracksData.items) {
-        const t = item.track;
-        await pool.query(
-          `INSERT INTO tracks(id, name, artist, album)
-           VALUES ($1, $2, $3, $4)
-           ON CONFLICT(id) DO UPDATE SET 
-             name = EXCLUDED.name, 
-             artist = EXCLUDED.artist, 
-             album = EXCLUDED.album`,
-          [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
-        );
-        savedCount++;
+    let nextUrl = 'https://api.spotify.com/v1/me/tracks?limit=50';
+    
+    const tracksRes = await fetch(nextUrl, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (tracksRes.ok) {
+      const tracksData = await tracksRes.json();
+      
+      if (tracksData.items && tracksData.items.length > 0) {
+        for (let item of tracksData.items) {
+          const t = item.track;
+          await pool.query(
+            `INSERT INTO tracks(id, name, artist, album, user_id)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT(id) DO UPDATE SET name = $2, artist = $3, album = $4, user_id = $5`,
+            [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name, userData.id]
+          );
+          savedCount++;
+        }
+        console.log(`Successfully saved ${savedCount} tracks for user ${userData.display_name}`);
       }
-      console.log(`Successfully saved ${savedCount} tracks to PostgreSQL.`);
-    } else {
-      console.log('No tracks found in Spotify library');
     }
 
-    console.log('Redirecting to:', `${process.env.FRONTEND_RESULTS_URL}?success=true&count=${savedCount}`);
-    res.redirect(`${process.env.FRONTEND_URL}?success=true&count=${savedCount}`);
+    res.redirect(`${process.env.FRONTEND_URL}?auth_success=true&user_name=${encodeURIComponent(userData.display_name)}&saved_tracks=${savedCount}`);
 
   } catch (err) {
     console.error('Spotify callback error:', err);
-    res.redirect(`${process.env.FRONTEND_RESULTS_URL}?error=server_error&message=${err.message}`);
+    res.redirect(`${process.env.FRONTEND_URL}?error=server_error`);
+  }
+});
+
+router.get('/my-playlists', async (req, res) => {
+  try {
+    const accessToken = await getMyAccessToken();
+    
+    const userRes = await fetch('https://api.spotify.com/v1/me', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    
+    if (!userRes.ok) {
+      throw new Error('Failed to fetch user profile - app may need reauthentication');
+    }
+    
+    const userData = await userRes.json();
+    const userId = userData.id;
+    
+    const playlistsRes = await fetch(`https://api.spotify.com/v1/users/${userId}/playlists?limit=50`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!playlistsRes.ok) {
+      throw new Error('Failed to fetch user playlists');
+    }
+
+    const playlistsData = await playlistsRes.json();
+    
+    const formattedPlaylists = playlistsData.items.map(playlist => ({
+      id: playlist.id,
+      name: playlist.name,
+      description: playlist.description,
+      tracks: playlist.tracks.total,
+      image: playlist.images[0]?.url,
+      owner: playlist.owner.display_name,
+      public: playlist.public
+    }));
+
+    console.log(`Fetched ${formattedPlaylists.length} playlists for user ${userData.display_name}`);
+    res.json(formattedPlaylists);
+
+  } catch (err) {
+    console.error('Error fetching user playlists:', err);
+    
+    try {
+      console.log('Falling back to featured playlists');
+      const accessToken = await getMyAccessToken();
+      const playlistsRes = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=20', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+
+      if (!playlistsRes.ok) {
+        throw new Error('Featured playlists also failed');
+      }
+
+      const playlistsData = await playlistsRes.json();
+      const formattedPlaylists = playlistsData.playlists.items.map(playlist => ({
+        id: playlist.id,
+        name: playlist.name,
+        description: playlist.description,
+        tracks: playlist.tracks.total,
+        image: playlist.images[0]?.url,
+        owner: playlist.owner.display_name
+      }));
+
+      console.log(`Fetched ${formattedPlaylists.length} featured playlists as fallback`);
+      res.json(formattedPlaylists);
+    } catch (fallbackErr) {
+      console.error('Fallback also failed:', fallbackErr);
+      res.status(500).json({ 
+        error: 'Unable to load playlists. Please reconnect your Spotify account.',
+        details: fallbackErr.message 
+      });
+    }
+  }
+});
+
+router.get('/song-of-day', async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT * FROM tracks 
+      ORDER BY RANDOM() 
+      LIMIT 1
+    `);
+    
+    if (result.rows.length > 0) {
+      res.json(result.rows[0]);
+    } else {
+      try {
+        const accessToken = await getMyAccessToken();
+        const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=1', {
+          headers: { Authorization: `Bearer ${accessToken}` }
+        });
+        
+        if (tracksRes.ok) {
+          const tracksData = await tracksRes.json();
+          if (tracksData.items && tracksData.items.length > 0) {
+            const track = tracksData.items[0].track;
+            const songOfDay = {
+              id: track.id,
+              name: track.name,
+              artist: track.artists.map(a => a.name).join(', '),
+              album: track.album.name
+            };
+            res.json(songOfDay);
+          } else {
+            res.json(null);
+          }
+        } else {
+          res.json(null);
+        }
+      } catch (spotifyErr) {
+        console.error('Error fetching song from Spotify:', spotifyErr);
+        res.json(null);
+      }
+    }
+  } catch (err) {
+    console.error('Error fetching song of day:', err);
+    res.status(500).json({ error: 'Error fetching song of day' });
+  }
+});
+
+router.get('/playlist/:id', async (req, res) => {
+  try {
+    const playlistId = req.params.id;
+    const accessToken = await getMyAccessToken();
+
+    const playlistRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!playlistRes.ok) {
+      throw new Error('Failed to fetch playlist');
+    }
+
+    const playlistData = await playlistRes.json();
+    
+    const formattedPlaylist = {
+      id: playlistData.id,
+      name: playlistData.name,
+      description: playlistData.description,
+      followers: playlistData.followers?.total || 0,
+      image: playlistData.images[0]?.url,
+      owner: playlistData.owner.display_name,
+      public: playlistData.public,
+      tracks: playlistData.tracks.items.map(item => ({
+        id: item.track.id,
+        name: item.track.name,
+        artist: item.track.artists.map(artist => artist.name).join(', '),
+        album: item.track.album.name,
+        duration: item.track.duration_ms,
+        preview_url: item.track.preview_url
+      }))
+    };
+
+    res.json(formattedPlaylist);
+
+  } catch (err) {
+    console.error('Error fetching playlist details:', err);
+    res.status(500).json({ error: 'Error fetching playlist details' });
   }
 });
 
@@ -148,160 +343,72 @@ router.get('/search', async (req, res) => {
   }
 });
 
-router.get('/playlists', async (req, res) => {
+router.get('/top-tracks', async (req, res) => {
   try {
-    const authHeader = Buffer.from(
-      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64');
-
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${authHeader}`
-      },
-      body: querystring.stringify({
-        grant_type: 'client_credentials'
-      })
-    });
-
-    const tokenData = await tokenRes.json();
+    const accessToken = await getMyAccessToken();
     
-    if (!tokenRes.ok) {
-      console.error('Token error:', tokenData);
-      return res.status(500).json({ error: 'Failed to get access token' });
-    }
-
-    const accessToken = tokenData.access_token;
-
-    const playlistsRes = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=20', {
+    const tracksRes = await fetch('https://api.spotify.com/v1/me/top/tracks?limit=10&time_range=short_term', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
-    if (!playlistsRes.ok) {
-      console.error('Playlists fetch error:', await playlistsRes.text());
-      return res.status(500).json({ error: 'Failed to fetch playlists' });
+    if (!tracksRes.ok) {
+      throw new Error('Failed to fetch top tracks');
     }
 
-    const playlistsData = await playlistsRes.json();
+    const tracksData = await tracksRes.json();
     
-    const formattedPlaylists = playlistsData.playlists.items.map(playlist => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      tracks: playlist.tracks.total,
-      image: playlist.images[0]?.url,
-      owner: playlist.owner.display_name
+    const formattedTracks = tracksData.items.map(track => ({
+      id: track.id,
+      name: track.name,
+      artist: track.artists.map(artist => artist.name).join(', '),
+      album: track.album.name,
+      image: track.album.images[0]?.url,
+      duration: track.duration_ms,
+      preview_url: track.preview_url
     }));
 
-    res.json(formattedPlaylists);
-
+    res.json(formattedTracks);
   } catch (err) {
-    console.error('Error fetching playlists:', err);
-    res.status(500).json({ error: 'Error fetching playlists' });
+    console.error('Error fetching top tracks:', err);
+    res.status(500).json({ error: 'Error fetching top tracks' });
   }
 });
 
-router.get('/my-playlists', async (req, res) => {
-  try {    
-    const authHeader = Buffer.from(
-      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64');
-
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${authHeader}`
-      },
-      body: querystring.stringify({
-        grant_type: 'client_credentials'
-      })
-    });
-
-    const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-
-    const playlistsRes = await fetch('https://api.spotify.com/v1/browse/featured-playlists?limit=50', {
+router.get('/top-artists', async (req, res) => {
+  try {
+    const accessToken = await getMyAccessToken();
+    
+    const artistsRes = await fetch('https://api.spotify.com/v1/me/top/artists?limit=10&time_range=short_term', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
 
-    const playlistsData = await playlistsRes.json();
+    if (!artistsRes.ok) {
+      throw new Error('Failed to fetch top artists');
+    }
+
+    const artistsData = await artistsRes.json();
     
-    const formattedPlaylists = playlistsData.playlists.items.map(playlist => ({
-      id: playlist.id,
-      name: playlist.name,
-      description: playlist.description,
-      tracks: playlist.tracks.total,
-      image: playlist.images[0]?.url,
-      owner: playlist.owner.display_name,
-      public: playlist.public
+    const formattedArtists = artistsData.items.map(artist => ({
+      id: artist.id,
+      name: artist.name,
+      image: artist.images[0]?.url,
+      genres: artist.genres.slice(0, 3),
+      followers: artist.followers.total
     }));
 
-    res.json(formattedPlaylists);
-
+    res.json(formattedArtists);
   } catch (err) {
-    console.error('Error fetching user playlists:', err);
-    res.status(500).json({ error: 'Error fetching playlists' });
+    console.error('Error fetching top artists:', err);
+    res.status(500).json({ error: 'Error fetching top artists' });
   }
 });
 
-router.get('/playlist/:id', async (req, res) => {
-  try {
-    const playlistId = req.params.id;
-    
-    const authHeader = Buffer.from(
-      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
-    ).toString('base64');
-
-    const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${authHeader}`
-      },
-      body: querystring.stringify({
-        grant_type: 'client_credentials'
-      })
-    });
-
-    const tokenData = await tokenRes.json();
-    const accessToken = tokenData.access_token;
-
-    const playlistRes = await fetch(`https://api.spotify.com/v1/playlists/${playlistId}`, {
-      headers: { Authorization: `Bearer ${accessToken}` }
-    });
-
-    if (!playlistRes.ok) {
-      throw new Error('Failed to fetch playlist');
-    }
-
-    const playlistData = await playlistRes.json();
-    
-    const formattedPlaylist = {
-      id: playlistData.id,
-      name: playlistData.name,
-      description: playlistData.description,
-      followers: playlistData.followers?.total || 0,
-      image: playlistData.images[0]?.url,
-      owner: playlistData.owner.display_name,
-      public: playlistData.public,
-      tracks: playlistData.tracks.items.map(item => ({
-        id: item.track.id,
-        name: item.track.name,
-        artist: item.track.artists.map(artist => artist.name).join(', '),
-        album: item.track.album.name,
-        duration: item.track.duration_ms,
-        preview_url: item.track.preview_url
-      }))
-    };
-
-    res.json(formattedPlaylist);
-
-  } catch (err) {
-    console.error('Error fetching playlist details:', err);
-    res.status(500).json({ error: 'Error fetching playlist details' });
-  }
+router.get('/health', (req, res) => {
+  res.json({ 
+    status: 'OK', 
+    message: 'Auth routes are working',
+    timestamp: new Date().toISOString()
+  });
 });
 
 export default router;
