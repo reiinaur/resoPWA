@@ -1,9 +1,11 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 export function Home() {
   const [songOfDay, setSongOfDay] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
   
   const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -23,7 +25,7 @@ export function Home() {
       }
 
       // Fetch user playlists
-      const playlistsRes = await fetch(`${backendUrl}/auth/playlists`);
+      const playlistsRes = await fetch(`${backendUrl}/auth/my-playlists`);
       if (playlistsRes.ok) {
         const playlistsData = await playlistsRes.json();
         setPlaylists(playlistsData);
@@ -39,6 +41,10 @@ export function Home() {
     window.location.href = `${backendUrl}/auth/login`;
   };
 
+  const handlePlaylistClick = (playlistId) => {
+    navigate(`/playlist/${playlistId}`);
+  };
+
   if (loading) {
     return (
       <div style={{ textAlign: 'center', marginTop: '50px' }}>
@@ -48,7 +54,7 @@ export function Home() {
   }
 
   return (
-    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto' }}>
+    <div style={{ padding: '20px', maxWidth: '1200px', margin: '0 auto', minHeight: '80vh' }}>
       {/* Header */}
       <header style={{ marginBottom: '40px' }}>
         <h1 style={{ fontSize: '2.5rem', marginBottom: '10px', color: '#1DB954' }}>
@@ -123,7 +129,7 @@ export function Home() {
       {/* Playlists Section */}
       <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h2 style={{ fontSize: '1.5rem' }}>📚 My Playlists</h2>
+          <h2 style={{ fontSize: '1.5rem' }}>📚 Featured Playlists</h2>
           <span style={{ color: '#666' }}>{playlists.length} playlists</span>
         </div>
         
@@ -136,35 +142,52 @@ export function Home() {
             {playlists.map(playlist => (
               <div 
                 key={playlist.id}
+                onClick={() => handlePlaylistClick(playlist.id)}
                 style={{
                   backgroundColor: '#f8f9fa',
                   padding: '20px',
                   borderRadius: '10px',
                   cursor: 'pointer',
-                  transition: 'transform 0.2s',
+                  transition: 'all 0.3s ease',
                   textAlign: 'center'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 10px 20px rgba(0,0,0,0.1)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
                 }}
               >
-                <div style={{
-                  width: '100%',
-                  aspectRatio: '1',
-                  backgroundColor: '#1DB954',
-                  borderRadius: '8px',
-                  marginBottom: '15px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '2rem',
-                  color: 'white'
-                }}>
-                  🎵
-                </div>
+                {playlist.image ? (
+                  <img 
+                    src={playlist.image} 
+                    alt={playlist.name}
+                    style={{
+                      width: '100%',
+                      aspectRatio: '1',
+                      borderRadius: '8px',
+                      marginBottom: '15px',
+                      objectFit: 'cover'
+                    }}
+                  />
+                ) : (
+                  <div style={{
+                    width: '100%',
+                    aspectRatio: '1',
+                    backgroundColor: '#1DB954',
+                    borderRadius: '8px',
+                    marginBottom: '15px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    fontSize: '2rem',
+                    color: 'white'
+                  }}>
+                    🎵
+                  </div>
+                )}
                 <h3 style={{ 
                   margin: '0 0 5px 0',
                   fontSize: '1rem',
@@ -174,6 +197,16 @@ export function Home() {
                 }}>
                   {playlist.name}
                 </h3>
+                <p style={{ 
+                  margin: '0 0 5px 0', 
+                  color: '#666', 
+                  fontSize: '0.8rem',
+                  whiteSpace: 'nowrap',
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis'
+                }}>
+                  {playlist.owner}
+                </p>
                 <p style={{ 
                   margin: 0, 
                   color: '#666', 
