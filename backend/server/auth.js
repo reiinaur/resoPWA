@@ -7,11 +7,9 @@ import { initDB } from './db.js';
 dotenv.config();
 
 const router = express.Router();
-const redirectUri = process.env.REDIRECT_URI; 
-
+const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
 
-// Step 1: redirect user to Spotify login
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -24,27 +22,28 @@ router.get('/login', (req, res) => {
 
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
-
   if (!code) return res.send('No code received');
 
   try {
-    const body = querystring.stringify({
-      grant_type: 'authorization_code',
-      code,
-      redirect_uri: redirectUri,
-      client_id: process.env.SPOTIFY_CLIENT_ID,
-      client_secret: process.env.SPOTIFY_CLIENT_SECRET
-    });
+    const authHeader = Buffer.from(
+      `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
+    ).toString('base64');
 
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+        'Authorization': `Basic ${authHeader}`
+      },
+      body: querystring.stringify({
+        grant_type: 'authorization_code',
+        code,
+        redirect_uri: redirectUri
+      })
     });
 
     const tokenData = await tokenRes.json();
     const accessToken = tokenData.access_token;
-
     if (!accessToken) return res.send('Token error');
 
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
@@ -52,8 +51,8 @@ router.get('/callback', async (req, res) => {
     });
 
     const tracksData = await tracksRes.json();
-
     const db = await initDB();
+
     for (let item of tracksData.items) {
       const t = item.track;
       await db.run(
