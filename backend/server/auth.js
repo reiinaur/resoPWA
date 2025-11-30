@@ -47,11 +47,11 @@ router.get('/callback', async (req, res) => {
   if (!code) return res.send('No code received');
 
   try {
-    // Get access token
     const authHeader = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
     ).toString('base64');
 
+    // Get access token
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -66,11 +66,9 @@ router.get('/callback', async (req, res) => {
     });
 
     const tokenData = await tokenRes.json();
-    console.log('Token response:', tokenData);
-
     if (!tokenData.access_token) return res.send('Token error');
 
-    // Fetch Spotify tracks
+    // Fetch user tracks
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` }
     });
@@ -92,12 +90,12 @@ router.get('/callback', async (req, res) => {
       };
     });
 
-    // 1️⃣ Send HTML to browser immediately
+    // Send HTML immediately
     res.send(`
       <html>
         <head>
           <script>
-            const tracks = ${JSON.stringify(trackList)};
+            const tracks = ${JSON.stringify(trackList).replace(/'/g, "\\'")};
             localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
             window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
           </script>
@@ -108,7 +106,7 @@ router.get('/callback', async (req, res) => {
       </html>
     `);
 
-    // 2️⃣ Store in SQLite asynchronously (won’t block response)
+    // Async SQLite save
     (async () => {
       try {
         const db = await setupDB();
@@ -120,7 +118,7 @@ router.get('/callback', async (req, res) => {
         }
         console.log('Tracks saved to SQLite.');
       } catch (err) {
-        console.error('SQLite save error:', err);
+        console.error('SQLite async error:', err);
       }
     })();
 

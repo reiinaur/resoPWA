@@ -1,5 +1,5 @@
 export function Home() {
-  const backendUrl = import.meta.env.VITE_API_URL; // e.g., https://resopwa-backend.up.railway.app
+  const backendUrl = import.meta.env.VITE_API_URL;
 
   const handleLogin = () => {
     window.location.href = `${backendUrl}/auth/login`;
@@ -11,12 +11,7 @@ export function Home() {
       <p>Click below to connect your Spotify account</p>
       <button
         onClick={handleLogin}
-        style={{
-          padding: '10px 20px',
-          fontSize: '16px',
-          cursor: 'pointer',
-          marginTop: '20px'
-        }}
+        style={{ padding: '10px 20px', fontSize: '16px', marginTop: '20px', cursor: 'pointer' }}
       >
         Login with Spotify
       </button>
