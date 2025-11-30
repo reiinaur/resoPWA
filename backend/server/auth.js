@@ -114,4 +114,32 @@ router.get('/tracks', async (req, res) => {
   }
 });
 
+router.get('/search', async (req, res) => {
+  try {
+    const { q } = req.query;
+    
+    if (!q) {
+      const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
+      return res.json(result.rows);
+    }
+
+    // Search in tracks
+    const result = await pool.query(
+      `SELECT * FROM tracks 
+       WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
+       ORDER BY created_at DESC`,
+      [`%${q}%`]
+    );
+    
+    res.json(result.rows);
+  } catch (err) {
+    console.error('Search error:', err);
+    res.status(500).json({ error: 'Error searching tracks' });
+  }
+});
+
+console.log('Tracks saved to PostgreSQL.');
+console.log('Redirecting to:', `${process.env.FRONTEND_RESULTS_URL}?success=true&count=${tracksData.items?.length || 0}`);
+res.redirect(`${process.env.FRONTEND_RESULTS_URL}?success=true&count=${tracksData.items?.length || 0}`);
+
 export default router;
