@@ -70,7 +70,7 @@ router.get('/login', (req, res) => {
     state: 'some_random_state_string'
   });
 
-  res.redirect(`https://accounts.spotify.com/api/token?${params}`);
+  res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
 router.get('/callback', async (req, res) => {
