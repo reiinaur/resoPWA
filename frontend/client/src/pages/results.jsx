@@ -15,15 +15,15 @@ export function Results() {
   }, []);
 
   return (
-    <div>
+    <div style={{ maxWidth: '600px', margin: '50px auto' }}>
       <h1>My Spotify Tracks</h1>
       {tracks.length === 0 ? (
         <p>No tracks yet. Login and fetch from Spotify first.</p>
       ) : (
         <ul>
           {tracks.map(track => (
-            <li key={track.id}>
-              {track.name} by {track.artist} ({track.album})
+            <li key={track.id} style={{ marginBottom: '10px' }}>
+              <strong>{track.name}</strong> by {track.artist} ({track.album})
             </li>
           ))}
         </ul>
