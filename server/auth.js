@@ -88,7 +88,7 @@ router.get('/callback', async (req, res) => {
     }
 
     // Redirect frontend results page (update if you deploy frontend)
-    res.redirect('https://figure-florence-forever-hon.trycloudflare.com/results');
+    res.redirect('https://resopwa-production.up.railway.app/results');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error during callback');
