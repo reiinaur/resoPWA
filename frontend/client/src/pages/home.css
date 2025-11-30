@@ -1,4 +1,4 @@
-/* Home.css */
+/* Home.css - Updated */
 .home-container {
   padding: 20px;
   max-width: 1200px;
@@ -8,7 +8,7 @@
 
 /* Header Styles */
 .home-header {
-  margin-bottom: 40px;
+  margin-bottom: 30px;
 }
 
 .home-title {
@@ -21,6 +21,30 @@
 .home-subtitle {
   color: #666;
   font-size: 1.1rem;
+}
+
+/* Quick Actions */
+.quick-actions {
+  margin-bottom: 30px;
+  text-align: center;
+}
+
+.explore-btn {
+  padding: 12px 24px;
+  background: linear-gradient(135deg, #1DB954, #1ed760);
+  color: white;
+  border: none;
+  border-radius: 25px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(29, 185, 84, 0.3);
+}
+
+.explore-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(29, 185, 84, 0.4);
 }
 
 /* Section Styles */
@@ -48,22 +72,6 @@
 }
 
 /* Button Styles */
-.view-all-btn {
-  padding: 8px 16px;
-  border: 1px solid #1DB954;
-  border-radius: 15px;
-  background-color: transparent;
-  color: #1DB954;
-  cursor: pointer;
-  font-size: 0.9rem;
-  transition: all 0.2s ease;
-}
-
-.view-all-btn:hover {
-  background-color: #1DB954;
-  color: white;
-}
-
 .refresh-btn {
   padding: 5px 10px;
   border: 1px solid #ccc;
@@ -90,16 +98,16 @@
 }
 
 .reconnect-btn:hover {
-  background-color: #1ed760;
+  background-color: #f8f9fa;
   transform: translateY(-1px);
 }
 
 /* Song of the Day */
 .song-of-day-card {
-  background: linear-gradient(135deg, #1DB954, #191414);
+  background: #f8f9fa;
   padding: 30px;
   border-radius: 15px;
-  color: white;
+  color: rgb(8, 8, 8);
   display: flex;
   align-items: center;
   gap: 20px;
@@ -139,30 +147,14 @@
   font-size: 0.9rem;
 }
 
-/* Grid Layouts */
-.playlists-grid,
-.tracks-grid,
-.albums-grid {
+/* Playlists Grid */
+.playlists-grid {
   display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
   gap: 20px;
 }
 
-.playlists-grid {
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-}
-
-.tracks-grid {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-}
-
-.albums-grid {
-  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
-}
-
-/* Card Styles */
-.playlist-card,
-.track-card,
-.album-card {
+.playlist-card {
   background-color: #f8f9fa;
   padding: 20px;
   border-radius: 10px;
@@ -171,17 +163,12 @@
   text-align: center;
 }
 
-.playlist-card:hover,
-.track-card:hover,
-.album-card:hover {
+.playlist-card:hover {
   transform: translateY(-5px);
   box-shadow: 0 10px 20px rgba(0,0,0,0.1);
 }
 
-/* Image Styles */
-.playlist-image,
-.track-image,
-.album-image {
+.playlist-image {
   width: 100%;
   aspect-ratio: 1;
   border-radius: 8px;
@@ -189,9 +176,7 @@
   object-fit: cover;
 }
 
-.playlist-image-placeholder,
-.track-image-placeholder,
-.album-image-placeholder {
+.playlist-image-placeholder {
   width: 100%;
   aspect-ratio: 1;
   background-color: #1DB954;
@@ -204,15 +189,7 @@
   color: white;
 }
 
-.track-image-placeholder,
-.album-image-placeholder {
-  font-size: 1.5rem;
-}
-
-/* Text Styles */
-.playlist-name,
-.track-name,
-.album-name {
+.playlist-name {
   margin: 0 0 5px 0;
   font-size: 1rem;
   white-space: nowrap;
@@ -221,9 +198,7 @@
   font-weight: 600;
 }
 
-.playlist-owner,
-.track-artist,
-.album-artist {
+.playlist-owner {
   margin: 0 0 5px 0;
   color: #666;
   font-size: 0.8rem;
@@ -232,9 +207,7 @@
   text-overflow: ellipsis;
 }
 
-.playlist-tracks,
-.track-duration,
-.album-tracks {
+.playlist-tracks {
   margin: 0;
   color: #666;
   font-size: 0.8rem;
@@ -304,12 +277,6 @@
     gap: 15px;
   }
   
-  .tracks-grid,
-  .albums-grid {
-    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-    gap: 15px;
-  }
-  
   .song-of-day-card {
     flex-direction: column;
     text-align: center;
@@ -325,11 +292,6 @@
 
 @media (max-width: 480px) {
   .playlists-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-  
-  .tracks-grid,
-  .albums-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }

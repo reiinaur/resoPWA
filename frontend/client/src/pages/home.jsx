@@ -5,8 +5,6 @@ import './home.css';
 export function Home() {
   const [songOfDay, setSongOfDay] = useState(null);
   const [playlists, setPlaylists] = useState([]);
-  const [topTracks, setTopTracks] = useState([]);
-  const [topAlbums, setTopAlbums] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const navigate = useNavigate();
@@ -22,11 +20,9 @@ export function Home() {
       setLoading(true);
       setError('');
       
-      const [songRes, playlistsRes, topTracksRes, topAlbumsRes] = await Promise.all([
+      const [songRes, playlistsRes] = await Promise.all([
         fetch(`${backendUrl}/auth/song-of-day`),
-        fetch(`${backendUrl}/auth/my-playlists`),
-        fetch(`${backendUrl}/auth/top-tracks`),
-        fetch(`${backendUrl}/auth/top-albums`)
+        fetch(`${backendUrl}/auth/my-playlists`)
       ]);
 
       if (songRes.ok) {
@@ -37,16 +33,6 @@ export function Home() {
       if (playlistsRes.ok) {
         const playlistsData = await playlistsRes.json();
         setPlaylists(playlistsData);
-      }
-
-      if (topTracksRes.ok) {
-        const topTracksData = await topTracksRes.json();
-        setTopTracks(topTracksData);
-      }
-
-      if (topAlbumsRes.ok) {
-        const topAlbumsData = await topAlbumsRes.json();
-        setTopAlbums(topAlbumsData);
       }
 
     } catch (error) {
@@ -70,9 +56,9 @@ export function Home() {
       'My 2024 Playlist in a Bottle',
       'cutesy',
       'study study study',
-      'a',
+      'girly pop',
       'redemption arc',
-      'b',
+      'my old study playlist',
     ];
     
     return playlists.filter(playlist => 
@@ -90,10 +76,8 @@ export function Home() {
     window.location.href = `${backendUrl}/auth/login`;
   };
 
-  const formatDuration = (ms) => {
-    const minutes = Math.floor(ms / 60000);
-    const seconds = ((ms % 60000) / 1000).toFixed(0);
-    return `${minutes}:${seconds.padStart(2, '0')}`;
+  const navigateToExplore = () => {
+    navigate('/explore');
   };
 
   if (loading) {
@@ -121,9 +105,16 @@ export function Home() {
         )}
       </header>
 
+      {/* Quick Actions */}
+      <div className="quick-actions">
+        <button className="explore-btn" onClick={navigateToExplore}>
+          🎵 Explore Your Music
+        </button>
+      </div>
+
       {/* Song of the Day Section */}
       <section className="section">
-        <h2 className="section-title">Song of the Day</h2>
+        <h2 className="section-title">🎵 Your Song of the Day</h2>
         {songOfDay ? (
           <div className="song-of-day-card">
             <div className="song-artwork">
@@ -141,78 +132,6 @@ export function Home() {
           </div>
         )}
       </section>
-
-      {/* Top Songs Preview */}
-      {topTracks.length > 0 && (
-        <section className="section">
-          <div className="section-header">
-            <h2 className="section-title">🔥 Your Top Songs</h2>
-            <button 
-              className="view-all-btn"
-              onClick={() => navigate('/explore')}
-            >
-              View All
-            </button>
-          </div>
-          <div className="tracks-grid">
-            {topTracks.slice(0, 6).map(track => (
-              <div key={track.id} className="track-card">
-                {track.image ? (
-                  <img 
-                    src={track.image} 
-                    alt={track.name}
-                    className="track-image"
-                  />
-                ) : (
-                  <div className="track-image-placeholder">
-                    🎵
-                  </div>
-                )}
-                <h3 className="track-name">{track.name}</h3>
-                <p className="track-artist">{track.artist}</p>
-                {track.duration && (
-                  <p className="track-duration">{formatDuration(track.duration)}</p>
-                )}
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
-
-      {/* Top Albums Preview */}
-      {topAlbums.length > 0 && (
-        <section className="section">
-          <div className="section-header">
-            <h2 className="section-title">💿 Your Top Albums</h2>
-            <button 
-              className="view-all-btn"
-              onClick={() => navigate('/explore')}
-            >
-              View All
-            </button>
-          </div>
-          <div className="albums-grid">
-            {topAlbums.slice(0, 6).map(album => (
-              <div key={album.id} className="album-card">
-                {album.image ? (
-                  <img 
-                    src={album.image} 
-                    alt={album.name}
-                    className="album-image"
-                  />
-                ) : (
-                  <div className="album-image-placeholder">
-                    💿
-                  </div>
-                )}
-                <h3 className="album-name">{album.name}</h3>
-                <p className="album-artist">{album.artist}</p>
-                <p className="album-tracks">{album.track_count} tracks</p>
-              </div>
-            ))}
-          </div>
-        </section>
-      )}
 
       {/* Playlists Section */}
       <section className="section">
