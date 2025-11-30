@@ -12,7 +12,7 @@ const router = express.Router();
 const redirectUri = process.env.REDIRECT_URI;
 const scopes = 'user-library-read playlist-read-private';
 
-// Setup SQLite DB
+// SQLite setup
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const dbPath = path.join(__dirname, 'db.sqlite');
@@ -38,9 +38,7 @@ router.get('/login', (req, res) => {
     scope: scopes,
     redirect_uri: redirectUri
   });
-  const spotifyUrl = `https://accounts.spotify.com/authorize?${params}`;
-  console.log('Redirecting to Spotify:', spotifyUrl);
-  res.redirect(spotifyUrl);
+  res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
 // Callback route
@@ -49,11 +47,11 @@ router.get('/callback', async (req, res) => {
   if (!code) return res.send('No code received');
 
   try {
+    // Get access token
     const authHeader = Buffer.from(
       `${process.env.SPOTIFY_CLIENT_ID}:${process.env.SPOTIFY_CLIENT_SECRET}`
     ).toString('base64');
 
-    // Get access token
     const tokenRes = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -72,7 +70,7 @@ router.get('/callback', async (req, res) => {
 
     if (!tokenData.access_token) return res.send('Token error');
 
-    // Fetch tracks
+    // Fetch Spotify tracks
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${tokenData.access_token}` }
     });
@@ -84,29 +82,17 @@ router.get('/callback', async (req, res) => {
     }
 
     const tracksData = await tracksRes.json();
-    console.log('Fetched tracks count:', tracksData.items.length);
-
-    const db = await setupDB();
-    const trackList = [];
-
-    for (let item of tracksData.items) {
+    const trackList = tracksData.items.map(item => {
       const t = item.track;
-      const trackObj = {
+      return {
         id: t.id,
         name: t.name,
         artist: t.artists.map(a => a.name).join(', '),
         album: t.album.name
       };
-      trackList.push(trackObj);
+    });
 
-      // Optional: store in SQLite
-      await db.run(
-        `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
-        [trackObj.id, trackObj.name, trackObj.artist, trackObj.album]
-      );
-    }
-
-    // Safe localStorage injection and redirect
+    // 1️⃣ Send HTML to browser immediately
     res.send(`
       <html>
         <head>
@@ -121,6 +107,22 @@ router.get('/callback', async (req, res) => {
         </body>
       </html>
     `);
+
+    // 2️⃣ Store in SQLite asynchronously (won’t block response)
+    (async () => {
+      try {
+        const db = await setupDB();
+        for (const t of trackList) {
+          await db.run(
+            `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
+            [t.id, t.name, t.artist, t.album]
+          );
+        }
+        console.log('Tracks saved to SQLite.');
+      } catch (err) {
+        console.error('SQLite save error:', err);
+      }
+    })();
 
   } catch (err) {
     console.error('Spotify callback error:', err);
