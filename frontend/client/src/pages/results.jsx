@@ -4,10 +4,14 @@ export function Results() {
   const [tracks, setTracks] = useState([]);
 
   useEffect(() => {
-    const storedTracks = localStorage.getItem('spotifyTracks');
-    if (storedTracks) {
-      setTracks(JSON.parse(storedTracks));
-      localStorage.removeItem('spotifyTracks');
+    const stored = localStorage.getItem('spotifyTracks');
+    if (stored) {
+      try {
+        const parsedTracks = JSON.parse(stored);
+        setTracks(parsedTracks);
+      } catch (err) {
+        console.error('Error parsing stored tracks:', err);
+      }
     }
   }, []);
 

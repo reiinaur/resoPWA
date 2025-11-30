@@ -78,6 +78,7 @@ router.get('/callback', async (req, res) => {
       <head>
         <script>
           const tracks = ${JSON.stringify(trackList)};
+          // Store as JSON string
           localStorage.setItem('spotifyTracks', JSON.stringify(tracks));
           window.location.href = '${process.env.FRONTEND_RESULTS_URL}';
         </script>
@@ -87,6 +88,7 @@ router.get('/callback', async (req, res) => {
       </body>
     </html>
   `);
+
 
   } catch (err) {
     console.error('Spotify callback error:', err);
