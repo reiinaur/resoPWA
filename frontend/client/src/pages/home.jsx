@@ -8,7 +8,7 @@ export function Home() {
     <div>
       <h1>Welcome to My Spotify App</h1>
       <p>Click below to connect your Spotify account</p>
-      <button onClick={() => window.location.href = "https://resopwa-backend.up.railway.app/login"}>
+      <button onClick={() => window.location.href = "https://resopwa-backend.up.railway.app/auth/login"}>
         Login with Spotify
       </button>
     </div>
