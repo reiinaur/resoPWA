@@ -10,17 +10,16 @@ import { fileURLToPath } from 'url';
 dotenv.config();
 
 const router = express.Router();
-const redirectUri = "http://127.0.0.1:3000/auth/callback";
+const redirectUri = process.env.REDIRECT_URI; // use the tunnel URL
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Database open — correct folder
+// Open SQLite
 let db;
-
 (async () => {
   db = await open({
-    filename: path.resolve(__dirname, 'database/spotify.db'),
+    filename: path.resolve(__dirname, '.database/spotify.db'),
     driver: sqlite3.Database,
   });
 
@@ -36,17 +35,19 @@ let db;
 
 const scopes = 'user-library-read playlist-read-private';
 
+// Step 1: redirect user to Spotify login
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
     client_id: process.env.SPOTIFY_CLIENT_ID,
     scope: scopes,
-    redirect_uri: process.env.REDIRECT_URI
+    redirect_uri: redirectUri
   });
 
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
+// Step 2: Spotify callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
 
@@ -56,7 +57,7 @@ router.get('/callback', async (req, res) => {
     const body = querystring.stringify({
       grant_type: 'authorization_code',
       code,
-      redirect_uri: process.env.REDIRECT_URI,
+      redirect_uri: redirectUri,
       client_id: process.env.SPOTIFY_CLIENT_ID,
       client_secret: process.env.SPOTIFY_CLIENT_SECRET
     });
@@ -86,7 +87,8 @@ router.get('/callback', async (req, res) => {
       );
     }
 
-    res.redirect('http://127.0.0.1:5173/results');
+    // Redirect frontend results page (update if you deploy frontend)
+    res.redirect('https://figure-florence-forever-hon.trycloudflare.com/results');
   } catch (err) {
     console.error(err);
     res.status(500).send('Error during callback');

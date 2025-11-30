@@ -8,7 +8,7 @@ export function Home() {
     <div>
       <h1>Welcome to My Spotify App</h1>
       <p>Click below to connect your Spotify account</p>
-      <button onClick={() => window.location.href = "http://127.0.0.1:3000/auth/login"}>
+      <button onClick={() => window.location.href = "https://figure-florence-forever-hon.trycloudflare.com/auth/login"}>
         Login with Spotify
       </button>
     </div>
