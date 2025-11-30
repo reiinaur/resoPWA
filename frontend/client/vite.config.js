@@ -3,9 +3,8 @@ import react from '@vitejs/plugin-react';
 import path from 'path';
 
 export default defineConfig({
-  root: path.resolve(__dirname, 'client'),
+  plugins: [react()],
   build: {
-    outDir: path.resolve(__dirname, 'dist') // or client/dist
-  },
-  plugins: [react()]
+    outDir: path.resolve(__dirname, 'dist') // frontend/client/dist
+  }
 });
