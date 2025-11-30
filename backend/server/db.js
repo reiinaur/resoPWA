@@ -1,17 +1,15 @@
 import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
-import { fileURLToPath } from 'url';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+let db;
 
-const dbPath = path.join(__dirname, 'data', 'spotify.db');
+export async function initDB() {
+  if (db) return db; 
 
-export const initDB = async () => {
-  const db = await open({
-    filename: dbPath,
-    driver: sqlite3.Database,
+  db = await open({
+    filename: path.resolve('server/data/spotify.db'), 
+    driver: sqlite3.Database
   });
 
   await db.exec(`
@@ -23,5 +21,8 @@ export const initDB = async () => {
     )
   `);
 
+  console.log('SQLite initialized');
   return db;
-};
+}
+
+export default db;

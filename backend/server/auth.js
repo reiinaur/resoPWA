@@ -2,21 +2,16 @@ import express from 'express';
 import dotenv from 'dotenv';
 import fetch from 'node-fetch';
 import querystring from 'querystring';
+import { initDB } from './db.js';
 
 dotenv.config();
 
 const router = express.Router();
-const redirectUri = process.env.REDIRECT_URI;
+const redirectUri = process.env.REDIRECT_URI; 
 
 const scopes = 'user-library-read playlist-read-private';
 
-// Attach shared DB to req
-router.use((req, res, next) => {
-  req.db = req.app.get('db');
-  next();
-});
-
-// Step 1 — redirect user to Spotify login
+// Step 1: redirect user to Spotify login
 router.get('/login', (req, res) => {
   const params = querystring.stringify({
     response_type: 'code',
@@ -24,11 +19,9 @@ router.get('/login', (req, res) => {
     scope: scopes,
     redirect_uri: redirectUri
   });
-
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
-// Step 2 — Spotify callback
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
 
@@ -60,18 +53,19 @@ router.get('/callback', async (req, res) => {
 
     const tracksData = await tracksRes.json();
 
-    // Save tracks into shared SQLite DB
+    const db = await initDB();
     for (let item of tracksData.items) {
       const t = item.track;
-      await req.db.run(
+      await db.run(
         `INSERT OR REPLACE INTO tracks (id, name, artist, album) VALUES (?, ?, ?, ?)`,
         [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name]
       );
     }
 
-    res.redirect('https://resopwa-production.up.railway.app/results');
+    res.redirect(process.env.FRONTEND_URL + '/results');
+
   } catch (err) {
-    console.error(err);
+    console.error('Spotify callback error:', err);
     res.status(500).send('Error during callback');
   }
 });
