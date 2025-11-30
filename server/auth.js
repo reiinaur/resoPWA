@@ -17,12 +17,11 @@ const __dirname = path.dirname(__filename);
 
 // Open SQLite
 let db;
-(async () => {
+try {
   db = await open({
     filename: path.resolve(__dirname, '.database/spotify.db'),
     driver: sqlite3.Database,
   });
-
   await db.exec(`
     CREATE TABLE IF NOT EXISTS tracks (
       id TEXT PRIMARY KEY,
@@ -31,7 +30,10 @@ let db;
       album TEXT
     )
   `);
-})();
+} catch (err) {
+  console.error('SQLite initialization error:', err);
+  process.exit(1); // Crash safely so Railway log shows error
+}
 
 const scopes = 'user-library-read playlist-read-private';
 
