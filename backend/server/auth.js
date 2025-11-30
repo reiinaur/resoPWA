@@ -107,7 +107,7 @@ router.get('/callback', async (req, res) => {
     }
 
     console.log('Redirecting to:', `${process.env.FRONTEND_RESULTS_URL}?success=true&count=${savedCount}`);
-    res.redirect(`${process.env.FRONTEND_RESULTS_URL}?success=true&count=${savedCount}`);
+    res.redirect(`${process.env.FRONTEND_URL}?success=true&count=${savedCount}`);
 
   } catch (err) {
     console.error('Spotify callback error:', err);
