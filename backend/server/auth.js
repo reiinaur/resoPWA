@@ -20,6 +20,8 @@ router.get('/login', (req, res) => {
   res.redirect(`https://accounts.spotify.com/authorize?${params}`);
 });
 
+console.log('REDIRECT_URI:', redirectUri)
+
 router.get('/callback', async (req, res) => {
   const code = req.query.code;
   if (!code) return res.send('No code received');

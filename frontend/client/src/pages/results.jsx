@@ -2,12 +2,13 @@ import { useEffect, useState } from 'react';
 
 export function Results() {
   const [tracks, setTracks] = useState([]);
+  const backendUrl = import.meta.env.VITE_API_URL; 
 
   useEffect(() => {
-    // Fetch tracks stored in SQLite by backend
-    fetch('/tracks')
+    fetch(`${backendUrl}/tracks`)
       .then(res => res.json())
-      .then(data => setTracks(data));
+      .then(data => setTracks(data))
+      .catch(err => console.error('Error fetching tracks:', err));
   }, []);
 
   return (
