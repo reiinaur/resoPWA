@@ -1,17 +1,14 @@
-/* Home.css - Updated */
 .home-container {
   padding: 20px;
-  margin-left: auto;
-  margin-right: auto;
-  width: 1200px;
+  margin: 10px;
+  width: auto;
   min-height: 80vh;
+  align-items: center;
+  justify-content: center; 
 }
 
-/* Header Styles - CENTERED */
 .home-header {
   text-align: center; 
-  display: flex; 
-  flex-direction: column;
   justify-content: center; 
   align-items: center; 
   min-height: 30vh; 
@@ -26,12 +23,6 @@
 
 .home-subtitle {
   font-size: 1.1rem;
-}
-
-/* Quick Actions */
-.quick-actions {
-  margin-bottom: 30px;
-  text-align: center;
 }
 
 /* Section Styles */
@@ -259,9 +250,14 @@
   .home-container {
     padding: 15px;
   }
+
+  .home-header {
+    min-height: 15vh;
+  }
   
   .home-title {
-    font-size: 2rem;
+    font-size: 4rem;
+    letter-spacing: -5px;
   }
   
   .section-header {
@@ -289,6 +285,11 @@
 }
 
 @media (max-width: 480px) {
+  .home-title {
+    font-size: 2rem;
+    letter-spacing: -1px;
+  }
+
   .playlists-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -337,7 +338,7 @@
 }
 
 .home-container.dark .section-controls {
-  color: #ccc;
+  color: #eeeeee;
 }
 
 .home-container.dark .refresh-btn {

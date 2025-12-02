@@ -73,8 +73,8 @@ export function Explore() {
     <div className="explore-container">
       {/* Header */}
       <header className="explore-header">
-        <h1 className="explore-title">Explore Your Music</h1>
-        <p className="explore-subtitle">Discover your listening patterns</p>
+        <h1 className="explore-title">explore your music</h1>
+        <p className="explore-subtitle">discover your listening patterns</p>
       </header>
 
       {/* Search Section */}
@@ -97,7 +97,7 @@ export function Explore() {
 
       {/* Top Tracks Section */}
       <section className="content-section">
-        <h2 className="content-title">🔥 Your Top Songs</h2>
+        <h2 className="content-title">your top songs</h2>
         <div className="tracks-grid">
           {topTracks.map(track => (
             <div key={track.id} className="track-card">
@@ -126,7 +126,7 @@ export function Explore() {
 
       {/* Top Albums Section */}
       <section className="content-section">
-        <h2 className="content-title">💿 Your Top Albums</h2>
+        <h2 className="content-title">your top albums</h2>
         <div className="albums-grid">
           {topAlbums.map(album => (
             <div key={album.id} className="album-card">
@@ -154,7 +154,7 @@ export function Explore() {
       {/* Top Artists Section */}
       {topArtists.length > 0 && (
         <section className="content-section">
-          <h2 className="content-title">👤 Your Top Artists</h2>
+          <h2 className="content-title">your top artists</h2>
           <div className="artists-grid">
             {topArtists.map(artist => (
               <div key={artist.id} className="artist-card">
