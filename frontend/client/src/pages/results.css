@@ -402,12 +402,12 @@
 }
 
 .play-btn {
-  background-color: #ffe4ed;
-  color: #3d3d3d;
+  background-color: #3d3d3d;
+  color: #ffe4ed;
 }
 
 .results-container.dark .play-btn {
-  background-color: #ff4d8d;
+  background-color: #ffe4ed;
   color: white;
 }
 

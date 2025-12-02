@@ -9,6 +9,10 @@
   margin: 0;       
 }
 
+.explore-container.dark {
+  background-color: #2b2b2b;
+}
+
 /* Header Styles */
 .explore-header {
   text-align: center; 

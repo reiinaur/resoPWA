@@ -63,6 +63,14 @@ export function Explore() {
     return `${minutes}:${seconds.padStart(2, '0')}`;
   };
 
+  const handleItemClick = (item, type) => {
+    if (item.external_urls?.spotify) {
+      window.open(item.external_urls.spotify, '_blank', 'noopener,noreferrer');
+    } else {
+      console.log(`${type} clicked:`, item.name);
+    }
+  };
+
   if (loading) {
     return (
       <div className="loading-container">
@@ -121,6 +129,11 @@ export function Explore() {
                   {track.duration && (
                     <p className="track-duration">{formatDuration(track.duration)}</p>
                   )}
+                  {track.external_urls?.spotify && (
+                    <div className="spotify-indicator">
+                      <span className="spotify-icon-small">▶️</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -132,7 +145,7 @@ export function Explore() {
           <h2 className="content-title">your top albums</h2>
           <div className="albums-grid">
             {topAlbums.map(album => (
-              <div key={album.id} className="album-card">
+              <div key={album.id} className="album-card" onClick={() => handleItemClick(album, 'album')} title={album.external_urls?.spotify ? "Click to open in Spotify" : "Click for details"}>
                 {album.image ? (
                   <img 
                     src={album.image} 
@@ -148,6 +161,11 @@ export function Explore() {
                   <h3 className="album-name">{album.name}</h3>
                   <p className="album-artist">{album.artist}</p>
                   <p className="album-tracks">{album.track_count} tracks</p>
+                  {album.external_urls?.spotify && (
+                    <div className="spotify-indicator">
+                      <span className="spotify-icon-small">▶️</span>
+                    </div>
+                  )}
                 </div>
               </div>
             ))}
@@ -160,7 +178,7 @@ export function Explore() {
             <h2 className="content-title">your top artists</h2>
             <div className="artists-grid">
               {topArtists.map(artist => (
-                <div key={artist.id} className="artist-card">
+                <div key={artist.id} className="artist-card" onClick={() => handleItemClick(artist, 'artist')} title={artist.external_urls?.spotify ? "Click to open in Spotify" : "Click for details"}>
                   {artist.image ? (
                     <img 
                       src={artist.image} 
@@ -178,6 +196,11 @@ export function Explore() {
                       <p className="artist-followers">
                         {artist.followers.toLocaleString()} followers
                       </p>
+                    )}
+                    {artist.external_urls?.spotify && (
+                      <div className="spotify-indicator">
+                        <span className="spotify-icon-small">▶️</span>
+                      </div>
                     )}
                   </div>
                 </div>

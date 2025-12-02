@@ -300,7 +300,8 @@ router.get('/top-tracks', async (req, res) => {
           album: item.track.album.name,
           image: item.track.album.images[0]?.url,
           duration: item.track.duration_ms,
-          preview_url: item.track.preview_url
+          preview_url: item.track.preview_url,
+          external_urls: item.track.external_urls // Add this line
         }));
 
         console.log(`Fetched ${formattedTracks.length} saved tracks as fallback`);
@@ -315,7 +316,8 @@ router.get('/top-tracks', async (req, res) => {
         album: item.track.album.name,
         image: item.track.album.images[0]?.url,
         duration: item.track.duration_ms,
-        preview_url: item.track.preview_url
+        preview_url: item.track.preview_url,
+        external_urls: item.track.external_urls 
       }));
 
       console.log(`Fetched ${formattedTracks.length} recently played tracks`);
@@ -331,7 +333,8 @@ router.get('/top-tracks', async (req, res) => {
       album: track.album.name,
       image: track.album.images[0]?.url,
       duration: track.duration_ms,
-      preview_url: track.preview_url
+      preview_url: track.preview_url,
+      external_urls: track.external_urls 
     }));
 
     console.log(`Fetched ${formattedTracks.length} top tracks`);
@@ -374,7 +377,8 @@ router.get('/top-artists', async (req, res) => {
               name: artist.name,
               image: null,
               genres: [],
-              followers: 0
+              followers: 0,
+              external_urls: artist.external_urls 
             });
           }
         });
@@ -392,7 +396,8 @@ router.get('/top-artists', async (req, res) => {
       name: artist.name,
       image: artist.images[0]?.url,
       genres: artist.genres.slice(0, 3),
-      followers: artist.followers.total
+      followers: artist.followers.total,
+      external_urls: artist.external_urls 
     }));
 
     console.log(`Fetched ${formattedArtists.length} top artists`);
@@ -430,7 +435,8 @@ router.get('/top-albums', async (req, res) => {
           artist: album.artists.map(artist => artist.name).join(', '),
           image: album.images[0]?.url,
           track_count: 1,
-          release_date: album.release_date
+          release_date: album.release_date,
+          external_urls: album.external_urls 
         });
       } else {
         albumMap.get(album.id).track_count++;
