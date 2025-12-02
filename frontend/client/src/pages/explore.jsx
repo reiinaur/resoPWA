@@ -64,10 +64,14 @@ export function Explore() {
   };
 
   const handleItemClick = (item, type) => {
-    if (item.external_urls?.spotify) {
-      window.open(item.external_urls.spotify, '_blank', 'noopener,noreferrer');
+    const spotifyUrl = item.spotify_url || 
+                    item.external_urls?.spotify || 
+                    (item.external_urls && item.external_urls.spotify);
+
+    if (spotifyUrl) {
+      window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
     } else {
-      console.log(`${type} clicked:`, item.name);
+      console.log(`No Spotify URL found for ${type}:`, item.name);
     }
   };
 

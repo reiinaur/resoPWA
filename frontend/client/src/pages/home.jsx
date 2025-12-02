@@ -71,7 +71,10 @@ export function Home() {
   };
 
   const handlePlaylistClick = (playlist) => {
-    const spotifyUrl = playlist.spotify_url || playlist.external_urls?.spotify;
+    const spotifyUrl = playlist.spotify_url || 
+                    playlist.external_urls?.spotify || 
+                    (playlist.external_urls && playlist.external_urls.spotify);
+
     if (spotifyUrl) {
       console.log('Opening Spotify URL:', spotifyUrl); 
       window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
@@ -85,8 +88,8 @@ export function Home() {
   <div 
     key={playlist.id}
     className="playlist-card"
-    onClick={() => handlePlaylistClick(playlist)}
-    title={playlist.spotify_url || playlist.external_urls?.spotify ? "Click to open in Spotify" : "Click to view details"}
+    onClick={() => handlePlaylistClick(playlist.id)}
+    title={playlist.external_urls?.spotify ? "Click to open in Spotify" : "Click to view details"}
   />
 ))}
 

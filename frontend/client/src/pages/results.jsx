@@ -151,7 +151,7 @@ export function Results() {
               Login with Spotify Again
             </button>
           </div>
-        ) : (
+          ) : (
           <>
             <div className="results-header-bar">
               <h2 className={`results-count ${theme}`}>
@@ -170,17 +170,21 @@ export function Results() {
               {tracks.map(track => (
                 <div key={track.id} className="track-card">
                   <div className="track-image-container">
-                    {track.image ? (
+                    {{track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image ? (
                       <img 
-                        src={track.image} 
+                        src={track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image}
                         alt={track.name}
                         className="track-image"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<div class="track-image-placeholder">🎵</div>';
+                        }}                    
                       />
                     ) : (
                       <div className="track-image-placeholder">
                         🎵
                       </div>
-                    )}
+                    )}}
                   </div>
                   <div className="track-info">
                     <h3 className="track-name">{track.name}</h3>
