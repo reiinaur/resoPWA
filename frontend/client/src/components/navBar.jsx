@@ -58,3 +58,4 @@ export function NavBar({theme, setTheme}) {
         </div>
     )
 }
+
