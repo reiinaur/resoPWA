@@ -324,3 +324,44 @@
   border-color: #555;
   color: #ccc;
 }
+
+.home-container.dark .song-of-day-card{
+  background: #3a3a3a;
+  color: #ececec;
+}
+
+.home-container.dark .playlist-card{
+  background-color: #3a3a3a;
+  border-color: #555;
+  color: #ccc;
+}
+
+.home-container.dark .section-controls {
+  color: #ccc;
+}
+
+.home-container.dark .refresh-btn {
+  background-color: #555;
+  color: #eee;
+  border-color: #777;
+}
+
+.home-container.dark .playlist-name{
+  color: #ccc;
+}
+
+.home-container.dark .playlist-owner{
+  color: #ccc;
+}
+
+.home-container.dark .playlist-tracks{
+  color: #ccc;
+}
+
+.home-container.dark .song-name {
+  color: #ccc;
+}
+
+.home-container.dark .song-artist{
+  color: #ccc;
+}
