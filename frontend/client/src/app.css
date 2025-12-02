@@ -1,6 +1,6 @@
 .mode{
   width: 100vw;
-  min-height: 100vw;
+  min-height: 50vw;
   background: #ffffff;
   transition: 0.5s ease;
   overflow-x: hidden;
@@ -16,6 +16,4 @@
   min-height: 100vh;
 }
 
-.music-player.expanded ~ .main-content {
-  padding-bottom: 200px; 
-}
+

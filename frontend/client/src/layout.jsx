@@ -10,7 +10,7 @@ export function Layout(){
         <div className={`mode ${theme}`}>
             <NavBar theme={theme} setTheme={setTheme}/>
             <main>
-                <Outlet/>
+                <Outlet context={{ theme }}/>
             </main>
         </div>
     )

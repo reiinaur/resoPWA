@@ -1,8 +1,10 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import './home.css';
 
 export function Home() {
+  const { theme } = useOutletContext();
   const [songOfDay, setSongOfDay] = useState(null);
   const [playlists, setPlaylists] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -89,117 +91,105 @@ export function Home() {
   }
 
   return (
-    <div className="home-container">
-      {/* Header */}
-      <header className="home-header">
-        <h1 className="home-title">resonance</h1>
-        <p className="home-subtitle">arisha's personal spotify collection</p>
-        
-        {error && (
-          <div className="error-banner">
-            <p>{error}</p>
-            <button className="reconnect-btn" onClick={handleReconnect}>
-              Reconnect Spotify
-            </button>
-          </div>
-        )}
-      </header>
+    <div className={`home-container ${theme}`}>
+      <div className="home-container">
+        {/* Header */}
+        <header className="home-header">
+          <h1 className="home-title">resonance</h1>
+          <p className="home-subtitle">welcome to your personal music collection  ٩(^ᗜ^ )و ´-</p>
+        </header>
 
-      {/* Quick Actions */}
-      <div className="quick-actions">
-        <button className="explore-btn" onClick={navigateToExplore}>
-          explore
-        </button>
-      </div>
-
-      {/* Song of the Day Section */}
-      <section className="section">
-        <h2 className="section-title">🎵 Your Song of the Day</h2>
-        {songOfDay ? (
-          <div className="song-of-day-card">
-            <div className="song-artwork">
-              {songOfDay.image ? (
-                <img 
-                  src={songOfDay.image} 
-                  alt={`${songOfDay.album} cover`}
-                  className="song-artwork-image"
-                />
-              ) : (
-                <div className="song-artwork-placeholder">
-                  🎵
-                </div>
-              )}
-            </div>
-            <div className="song-info">
-              <h3 className="song-name">{songOfDay.name}</h3>
-              <p className="song-artist">{songOfDay.artist}</p>
-              <p className="song-album">{songOfDay.album}</p>
-            </div>
+        {/* Song of the Day Section */}
+        <section className="section">
+          <div className="section-header">
+            <h2 className="section-title"> song of the day</h2>
           </div>
-        ) : (
-          <div className="empty-state">
-            <p>No song of the day available</p>
-          </div>
-        )}
-      </section>
-
-      {/* Playlists Section */}
-      <section className="section">
-        <div className="section-header">
-          <h2 className="section-title">📚 Your Playlists</h2>
-          <div className="section-controls">
-            <span className="playlist-count">
-              {filterPlaylists(playlists).length} playlists
-            </span>
-            <button 
-              className="refresh-btn"
-              onClick={fetchHomeData}
-            >
-              Refresh
-            </button>
-          </div>
-        </div>
-        
-        {filterPlaylists(playlists).length > 0 ? (
-          <div className="playlists-grid">
-            {filterPlaylists(playlists).map(playlist => (
-              <div 
-                key={playlist.id}
-                className="playlist-card"
-                onClick={() => handlePlaylistClick(playlist.id)}
-              >
-                {playlist.image ? (
+          {songOfDay ? (
+            <div className="song-of-day-card">
+              <div className="song-artwork">
+                {songOfDay.image ? (
                   <img 
-                    src={playlist.image} 
-                    alt={playlist.name}
-                    className="playlist-image"
+                    src={songOfDay.image} 
+                    alt={`${songOfDay.album} cover`}
+                    className="song-artwork-image"
                   />
                 ) : (
-                  <div className="playlist-image-placeholder">
+                  <div className="song-artwork-placeholder">
                     🎵
                   </div>
                 )}
-                <h3 className="playlist-name">{playlist.name}</h3>
-                <p className="playlist-owner">{playlist.owner}</p>
-                <p className="playlist-tracks">{playlist.tracks} songs</p>
               </div>
-            ))}
+              <div className="song-info">
+                <h3 className="song-name">{songOfDay.name}</h3>
+                <p className="song-artist">{songOfDay.artist}</p>
+                <p className="song-album">{songOfDay.album}</p>
+              </div>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No song of the day available</p>
+            </div>
+          )}
+        </section>
+
+        {/* Playlists Section */}
+        <section className="section">
+          <div className="section-header">
+            <h2 className="section-title">your playlists</h2>
+            <div className="section-controls">
+              <span className="playlist-count">
+                {filterPlaylists(playlists).length} playlists
+              </span>
+              <button 
+                className="refresh-btn"
+                onClick={fetchHomeData}
+              >
+                Refresh
+              </button>
+            </div>
           </div>
-        ) : (
-          <div className="empty-state">
-            <p>No playlists found in your account</p>
-            <p className="empty-state-help">
-              Make sure you have playlists in your Spotify account
-            </p>
-            <button 
-              className="reconnect-btn"
-              onClick={handleReconnect}
-            >
-              Reconnect Spotify Account
-            </button>
-          </div>
-        )}
-      </section>
+          
+          {filterPlaylists(playlists).length > 0 ? (
+            <div className="playlists-grid">
+              {filterPlaylists(playlists).map(playlist => (
+                <div 
+                  key={playlist.id}
+                  className="playlist-card"
+                  onClick={() => handlePlaylistClick(playlist.id)}
+                >
+                  {playlist.image ? (
+                    <img 
+                      src={playlist.image} 
+                      alt={playlist.name}
+                      className="playlist-image"
+                    />
+                  ) : (
+                    <div className="playlist-image-placeholder">
+                      🎵
+                    </div>
+                  )}
+                  <h3 className="playlist-name">{playlist.name}</h3>
+                  <p className="playlist-owner">{playlist.owner}</p>
+                  <p className="playlist-tracks">{playlist.tracks} songs</p>
+                </div>
+              ))}
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No playlists found in your account</p>
+              <p className="empty-state-help">
+                Make sure you have playlists in your Spotify account
+              </p>
+              <button 
+                className="reconnect-btn"
+                onClick={handleReconnect}
+              >
+                Reconnect Spotify Account
+              </button>
+            </div>
+          )}
+        </section>
+      </div>
     </div>
   );
 }

@@ -1,26 +1,30 @@
 /* Home.css - Updated */
 .home-container {
   padding: 20px;
-  max-width: 1200px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+  width: 1200px;
   min-height: 80vh;
 }
 
 /* Header Styles - CENTERED */
 .home-header {
-  margin-bottom: 30px;
-  text-align: center; /* Added this line */
+  text-align: center; 
+  display: flex; 
+  flex-direction: column;
+  justify-content: center; 
+  align-items: center; 
+  min-height: 30vh; 
 }
 
 .home-title {
-  font-size: 2.5rem;
+  font-size: 7rem;
   margin-bottom: 10px;
-  color: #ffe4ed;
-  font-weight: bold;
+  font-weight: bolder;
+  letter-spacing: -7px;
 }
 
 .home-subtitle {
-  color: #666;
   font-size: 1.1rem;
 }
 
@@ -28,24 +32,6 @@
 .quick-actions {
   margin-bottom: 30px;
   text-align: center;
-}
-
-.explore-btn {
-  padding: 12px 24px;
-  background: #ffe4ed;
-  color: white;
-  border: none;
-  border-radius: 25px;
-  cursor: pointer;
-  font-size: 1rem;
-  font-weight: 600;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(255, 228, 237, 0.3);
-}
-
-.explore-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(255, 228, 237, 0.4);
 }
 
 /* Section Styles */
@@ -90,8 +76,8 @@
 .reconnect-btn {
   padding: 10px 20px;
   background-color: #ffe4ed;
-  color: white;
-  border: none;
+  color: rgb(36, 36, 36);
+  border: 1px solid rgb(36, 36, 36);
   border-radius: 25px;
   cursor: pointer;
   font-size: 0.9rem;
@@ -112,7 +98,7 @@
   display: flex;
   align-items: center;
   gap: 20px;
-  border: 2px solid #ffe4ed;
+  border: 1px solid #ccc;
 }
 
 .song-artwork {
@@ -255,21 +241,6 @@
   margin-bottom: 20px;
 }
 
-/* Error Banner */
-.error-banner {
-  background-color: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 10px;
-  padding: 15px;
-  margin-top: 20px;
-  color: #856404;
-  text-align: center; /* Center error messages too */
-}
-
-.error-banner p {
-  margin: 0 0 10px 0;
-}
-
 /* Loading State */
 .loading-container {
   text-align: center;
@@ -322,4 +293,21 @@
   .playlists-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.home-title.light {
+  color: #4d4d4d;
+}
+
+.home-title.dark {
+  color: #ffe4ed;
+}
+
+.home-subtitle.light {
+  color: #666;
+}
+
+.home-subtitle.dark {
+  color: #ececec;
+  font-size: 1.1rem;
 }
