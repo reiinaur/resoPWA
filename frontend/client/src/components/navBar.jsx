@@ -4,25 +4,33 @@ import moonDefault from '../assets/moonDefault.png'
 import moonHover from '../assets/moonHover.png'
 import sunDefault from '../assets/sunDefault.png'
 import sunHover from '../assets/sunHover.png'
+import homeLight from '../assets/homeLight.png'
+import homeDark from '../assets/homeDark.png'
 import { useState } from "react"
+
 
 export function NavBar({theme, setTheme}) {
 
+
     const [isHover, setIsHover] = useState(false)
+
 
     const toggleMode = ()=>{
         theme == 'light' ? setTheme('dark') : setTheme('light');
     }
 
+
     const cursorHover = () => {
         setIsHover(true);
     }
+
 
     const cursorNotHover = () => {
         setIsHover(false);
     }
 
-    const iconDisplay = () => {
+
+    const themeIconDisplay = () => {
         if (theme === 'light') {
             return isHover ? moonHover : moonDefault;
         } else {
@@ -30,11 +38,20 @@ export function NavBar({theme, setTheme}) {
         }
     }
 
+
+    const homeIconDisplay = () => {
+        if (theme === 'light') {
+            return homeLight;
+        } else {
+            return homeDark;
+        }
+    }  
+
     return(
         <div className='navbar'>
             <div className = 'home'>
                 <Link to = '/'>
-                  <button>Home</button>
+                  <img src={homeIconDisplay()} alt='Home' className = 'homeIcon'/>
                </Link>
             </div>
             <div className = 'explore'>
@@ -42,7 +59,9 @@ export function NavBar({theme, setTheme}) {
                     <button>Explore</button>
                 </Link>
             </div>
-        <img onClick={toggleMode} onMouseEnter={cursorHover} onMouseLeave={cursorNotHover} src={iconDisplay()} alt='' className = 'toggleMode'/>
+            <div className="themeToggle">
+                <img onClick={toggleMode} onMouseEnter={cursorHover} onMouseLeave={cursorNotHover} src={themeIconDisplay()} alt='Toggle theme' className = 'themeIcon'/>
+            </div>
         </div>
     )
 }

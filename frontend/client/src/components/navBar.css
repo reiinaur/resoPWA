@@ -5,37 +5,79 @@
     align-items: center;
     justify-content: space-between;
     background: #ffe4ed;
-    border-bottom: 2px solid black;
-    padding-left: 0.5%;
-    padding-right: 1%;
+    border-bottom: 1px solid black;
+    padding: 0.5rem 1rem;
+    position: fixed;
+    top: 0;
+    left: 0;
+    z-index: 1000;
+    height: 45px;
 }
-.navbar button{
-    color:#2b2b2b;
-    font-size: 16px;
-    font-weight: 500;
-    background-color: #ffe4ed;
-    border: 1px solid black;
-    padding:5px 8px;
-    border-radius: 20px;
-}
-.home{
+
+.home {
     display: flex;
     align-items: center;
 }
-.explore{
-    margin-left: auto; 
+
+.homeIcon {
+    width: 30px;
+    cursor: pointer;
 }
-.container.dark .navbar{
-    background-color: #111111;
+
+.homeIcon:hover {
+    transform: scale(1.05);
+}
+
+.explore{
+    margin-left: auto;
+    margin-right: 0.2rem;
+}
+
+.navbar button{
+    color:#2b2b2b;
+    font-size: 14px;
+    font-weight: 500;
+    background-color: #ffe4ed;
+    border: 1px solid black;
+    padding:3px 6px;
+    border-radius: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.navbar button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.themeToggle {
+    display: flex;
+    align-items: center;
+}
+
+.themeIcon {
+    width: 34px;
+    height: 34px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.themeIcon:hover {
+    transform: scale(1.05);
 }
 
 /*dark mode*/
-.container.dark .navbar button{
-    color:#ffe4ed;
+.dark .navbar {
+    background-color: #111111;
+    border-bottom: 1px solid #ffe4ed;
+}
+
+.dark .navbar button {
+    color: #ffe4ed;
     background-color: #2b2b2b;
     border: 1px solid #ffe4ed;
 }
-.toggleMode{
-    width:50px;
-    cursor:pointer;
+
+body {
+    padding-top: 60px;
 }
