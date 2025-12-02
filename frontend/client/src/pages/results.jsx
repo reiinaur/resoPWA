@@ -79,10 +79,11 @@ export function Results() {
   };
 
   const getImageUrl = (track) => {
-    return track.image || 
-           track.image_url || 
-           track.album?.images?.[0]?.url || 
-           track.images?.[0]?.url;
+    if (track.image) return track.image;
+    if (track.image_url) return track.image_url;
+    if (track.album?.images?.[0]?.url) return track.album.images[0].url;
+    if (track.images?.[0]?.url) return track.images[0].url;
+    if (track.album_images?.[0]?.url) return track.album_images[0].url;
   };
 
   if (loading) {
@@ -171,18 +172,6 @@ export function Results() {
           </div>
           ) : (
           <>
-            <div className="results-header-bar">
-              <h2 className={`results-count ${theme}`}>
-                {query ? 'Search Results' : 'Your Library'} ({tracks.length})
-              </h2>
-              <div className="sort-controls">
-                <select className="sort-select">
-                  <option>Sort by Name</option>
-                  <option>Sort by Artist</option>
-                  <option>Sort by Album</option>
-                </select>
-              </div>
-            </div>
             
             <div className="tracks-grid">
               {tracks.map(track => (

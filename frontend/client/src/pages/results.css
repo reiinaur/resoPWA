@@ -409,6 +409,7 @@
 .results-container.dark .play-btn {
   background-color: #3d3d3d;
   color: #ffe4ed;
+  border-color: #2d2d2d;
 }
 
 .save-btn {
