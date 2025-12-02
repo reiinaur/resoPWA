@@ -235,7 +235,8 @@ router.get('/my-playlists', async (req, res) => {
         tracks: playlist.tracks.total,
         image: playlist.images[0]?.url,
         owner: playlist.owner.display_name,
-        external_urls: playlist.external_urls
+        external_urls: playlist.external_urls,
+        spotify_url: playlist.external_urls?.spotify
       }));
 
       console.log(`Fetched ${formattedPlaylists.length} featured playlists`);
@@ -251,7 +252,9 @@ router.get('/my-playlists', async (req, res) => {
       tracks: playlist.tracks.total,
       image: playlist.images[0]?.url,
       owner: playlist.owner.display_name,
-      public: playlist.public
+      public: playlist.public,
+      external_urls: playlist.external_urls,
+      spotify_url: playlist.external_urls?.spotify
     }));
 
     console.log(`Fetched ${formattedPlaylists.length} user playlists`);

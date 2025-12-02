@@ -70,9 +70,25 @@ export function Home() {
     );
   };
 
-  const handlePlaylistClick = (playlistId, spotifyUrl) => {
-    window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
+  const handlePlaylistClick = (playlist) => {
+    const spotifyUrl = playlist.spotify_url || playlist.external_urls?.spotify;
+    if (spotifyUrl) {
+      console.log('Opening Spotify URL:', spotifyUrl); 
+      window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      console.log('No Spotify URL found for playlist:', playlist); 
+      navigate(`/playlist/${playlist.id}`);
+    }
   };
+
+{filterPlaylists(playlists).map(playlist => (
+  <div 
+    key={playlist.id}
+    className="playlist-card"
+    onClick={() => handlePlaylistClick(playlist)}
+    title={playlist.spotify_url || playlist.external_urls?.spotify ? "Click to open in Spotify" : "Click to view details"}
+  />
+))}
 
   const handleReconnect = () => {
     window.location.href = `${backendUrl}/auth/login`;
