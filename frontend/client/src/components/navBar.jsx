@@ -8,27 +8,21 @@ import homeLight from '../assets/homeLight.png'
 import homeDark from '../assets/homeDark.png'
 import { useState } from "react"
 
-
 export function NavBar({theme, setTheme}) {
 
-
     const [isHover, setIsHover] = useState(false)
-
 
     const toggleMode = ()=>{
         theme == 'light' ? setTheme('dark') : setTheme('light');
     }
 
-
     const cursorHover = () => {
         setIsHover(true);
     }
 
-
     const cursorNotHover = () => {
         setIsHover(false);
     }
-
 
     const themeIconDisplay = () => {
         if (theme === 'light') {
@@ -37,7 +31,6 @@ export function NavBar({theme, setTheme}) {
             return isHover ? sunHover : sunDefault;
         }
     }
-
 
     const homeIconDisplay = () => {
         if (theme === 'light') {
