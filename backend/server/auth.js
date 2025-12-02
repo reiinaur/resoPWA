@@ -535,6 +535,37 @@ router.get('/tracks', async (req, res) => {
   }
 });
 
+const handleSearch = async () => {
+  if (!query.trim()) return;
+  
+  try {
+    setLoading(true);
+    const res = await fetch(
+      `${backendUrl}/auth/search?q=${encodeURIComponent(query)}&type=${searchType}`
+    );
+    if (res.ok) {
+      const data = await res.json();
+      
+      // ADD THIS DEBUG FOR SEARCH:
+      console.log('SEARCH DEBUG - First result:', {
+        name: data[0]?.name,
+        allFields: Object.keys(data[0] || {}),
+        imageValue: data[0]?.image,
+        imageType: typeof data[0]?.image,
+        hasImage: !!data[0]?.image,
+        albumImages: data[0]?.album?.images,
+        trackObject: data[0]
+      });
+      
+      setTracks(data);
+    }
+  } catch (error) {
+    console.error('Search error:', error);
+  } finally {
+    setLoading(false);
+  }
+};
+
 router.get('/search', async (req, res) => {
   try {
     const { q, type = 'track' } = req.query;
