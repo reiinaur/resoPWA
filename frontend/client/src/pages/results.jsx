@@ -170,7 +170,7 @@ export function Results() {
               {tracks.map(track => (
                 <div key={track.id} className="track-card">
                   <div className="track-image-container">
-                    {{track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image ? (
+                    {track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image ? (
                       <img 
                         src={track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image}
                         alt={track.name}
@@ -184,7 +184,7 @@ export function Results() {
                       <div className="track-image-placeholder">
                         🎵
                       </div>
-                    )}}
+                    )}
                   </div>
                   <div className="track-info">
                     <h3 className="track-name">{track.name}</h3>
