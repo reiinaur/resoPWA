@@ -25,6 +25,7 @@ async function createTables() {
         name TEXT NOT NULL,
         artist TEXT NOT NULL,
         album TEXT NOT NULL,
+        image_url TEXT,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       )
     `);

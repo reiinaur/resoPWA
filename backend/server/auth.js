@@ -151,10 +151,10 @@ router.get('/callback', async (req, res) => {
         for (let item of tracksData.items) {
           const t = item.track;
           await pool.query(
-            `INSERT INTO tracks(id, name, artist, album, user_id)
-             VALUES ($1, $2, $3, $4, $5)
-             ON CONFLICT(id) DO UPDATE SET name = $2, artist = $3, album = $4, user_id = $5`,
-            [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name, userData.id]
+            `INSERT INTO tracks(id, name, artist, album, image_url, user_id)
+            VALUES ($1, $2, $3, $4, $5, $6)
+            ON CONFLICT(id) DO UPDATE SET name = $2, artist = $3, album = $4, image_url = $5, user_id = $6`,
+            [t.id, t.name, t.artists.map(a => a.name).join(', '), t.album.name, t.album.images[0]?.url, userData.id]
           );
           savedCount++;
         }
@@ -184,7 +184,6 @@ router.get('/song-of-day', async (req, res) => {
       const track = result.rows[0];
       console.log(`Song of the day for ${today}:`, track.name);
       
-      // Try to get album art from Spotify
       try {
         const accessToken = await getUserAccessToken();
         const trackRes = await fetch(`https://api.spotify.com/v1/tracks/${track.id}`, {
@@ -201,7 +200,6 @@ router.get('/song-of-day', async (req, res) => {
       
       res.json(track);
     } else {
-      // ... existing fallback code
     }
   } catch (err) {
     console.error('Error fetching song of day:', err);
@@ -301,7 +299,7 @@ router.get('/top-tracks', async (req, res) => {
           image: item.track.album.images[0]?.url,
           duration: item.track.duration_ms,
           preview_url: item.track.preview_url,
-          external_urls: item.track.external_urls // Add this line
+          external_urls: item.track.external_urls 
         }));
 
         console.log(`Fetched ${formattedTracks.length} saved tracks as fallback`);
@@ -503,7 +501,6 @@ router.get('/tracks', async (req, res) => {
   try {
     const accessToken = await getUserAccessToken();
     
-    // Fetch saved tracks from Spotify
     const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
       headers: { Authorization: `Bearer ${accessToken}` }
     });
@@ -559,7 +556,7 @@ router.get('/search', async (req, res) => {
     const accessToken = await getUserAccessToken();
     
     if (!q) {
-const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+      const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
         headers: { Authorization: `Bearer ${accessToken}` }
       });
       
@@ -571,12 +568,16 @@ const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
           artist: item.track.artists.map(artist => artist.name).join(', '),
           album: item.track.album.name,
           image: item.track.album.images[0]?.url,
-          duration_ms: item.track.duration_ms
+          duration_ms: item.track.duration_ms,
+          external_urls: item.track.external_urls 
         }));
         return res.json(formattedTracks);
       }
-    }    
-    res.json(result.rows);
+      
+      const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
+      return res.json(result.rows);
+    }
+    
     const searchRes = await fetch(
       `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}&limit=20`,
       {
@@ -585,9 +586,15 @@ const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
     );
     
     if (!searchRes.ok) {
-      throw new Error('Search failed');
+      const result = await pool.query(
+        `SELECT * FROM tracks 
+         WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
+         ORDER BY created_at DESC`,
+        [`%${q}%`]
+      );
+      return res.json(result.rows);
     }
-    
+
     const searchData = await searchRes.json();
     
     let results = [];
@@ -598,7 +605,8 @@ const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
         artist: track.artists.map(artist => artist.name).join(', '),
         album: track.album.name,
         image: track.album.images[0]?.url,
-        duration_ms: track.duration_ms
+        duration_ms: track.duration_ms,
+        external_urls: track.external_urls 
       }));
     } else if (type === 'artist') {
       results = searchData.artists.items.map(artist => ({
@@ -606,7 +614,8 @@ const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
         name: artist.name,
         artist: artist.name,
         image: artist.images[0]?.url,
-        followers: artist.followers.total
+        followers: artist.followers.total,
+        external_urls: artist.external_urls 
       }));
     } else if (type === 'album') {
       results = searchData.albums.items.map(album => ({
@@ -616,14 +625,29 @@ const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
         album: album.name,
         image: album.images[0]?.url,
         release_date: album.release_date,
-        track_count: album.total_tracks
+        track_count: album.total_tracks,
+        external_urls: album.external_urls 
       }));
     }
     
     res.json(results);
   } catch (err) {
     console.error('Search error:', err);
-    res.status(500).json({ error: 'Error searching tracks' });
+    
+    const { q } = req.query;
+    if (!q) {
+      const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
+      return res.json(result.rows);
+    }
+    
+    const result = await pool.query(
+      `SELECT * FROM tracks 
+       WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
+       ORDER BY created_at DESC`,
+      [`%${q}%`]
+    );
+    
+    res.json(result.rows);
   }
 });
 

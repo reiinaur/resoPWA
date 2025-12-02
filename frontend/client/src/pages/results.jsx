@@ -7,7 +7,7 @@ export function Results() {
   const [tracks, setTracks] = useState([]);
   const [query, setQuery] = useState('');
   const [loading, setLoading] = useState(false);
-  const [searchType, setSearchType] = useState('track'); // 'track', 'artist', 'album'
+  const [searchType, setSearchType] = useState('track'); 
 
   const backendUrl = import.meta.env.VITE_API_URL;
 
@@ -62,9 +62,27 @@ export function Results() {
     }
   };
 
-  const clearSearch = () => {
-    setQuery('');
-    fetchTracks();
+  const handleItemClick = (item) => {
+    const spotifyUrl = item.external_urls?.spotify || 
+                      item.spotify_url || 
+                      (item.external_urls && item.external_urls.spotify);
+
+    if (spotifyUrl) {
+      window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
+    } else {
+      console.log('No Spotify URL found for:', item.name);
+      if (item.id) {
+        const constructedUrl = `https://open.spotify.com/${searchType}/${item.id}`;
+        window.open(constructedUrl, '_blank', 'noopener,noreferrer');
+      }
+    }
+  };
+
+  const getImageUrl = (track) => {
+    return track.image || 
+           track.image_url || 
+           track.album?.images?.[0]?.url || 
+           track.images?.[0]?.url;
   };
 
   if (loading) {
@@ -103,11 +121,11 @@ export function Results() {
                 Search
               </button>
               <button 
-              onClick={fetchTracks} 
-              className="refresh-btn"
-            >
-              Refresh Library
-            </button>
+                onClick={fetchTracks} 
+                className="refresh-btn"
+              >
+                Refresh Library
+              </button>
             </div>
             
             {/* Search Type Selector */}
@@ -168,11 +186,17 @@ export function Results() {
             
             <div className="tracks-grid">
               {tracks.map(track => (
-                <div key={track.id} className="track-card">
+                <div 
+                  key={track.id} 
+                  className="track-card"
+                  onClick={() => handleItemClick(track)} 
+                  title={track.external_urls?.spotify ? "Click to open in Spotify" : "Click for details"}
+                  style={{ cursor: 'pointer' }} 
+                >
                   <div className="track-image-container">
-                    {track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image ? (
+                    {getImageUrl(track) ? (
                       <img 
-                        src={track.album?.images?.[0]?.url || track.images?.[0]?.url || track.image_url || track.image}
+                        src={getImageUrl(track)}
                         alt={track.name}
                         className="track-image"
                         onError={(e) => {
@@ -198,7 +222,15 @@ export function Results() {
                     )}
                   </div>
                   <div className="track-actions">
-                    <button className="play-btn">▶</button>
+                    <button 
+                      className="play-btn"
+                      onClick={(e) => {
+                        e.stopPropagation(); 
+                        handleItemClick(track);
+                      }}
+                    >
+                      ▶
+                    </button>
                     <button className="save-btn">❤</button>
                   </div>
                 </div>
