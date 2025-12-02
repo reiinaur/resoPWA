@@ -114,7 +114,7 @@ export function Results() {
     <div className={`results-container ${theme}`}>
       <header className="results-header">
         <h1 className={`results-title ${theme}`}>search results</h1>
-        <p className={`results-subtitle ${theme}`}>find your favorite music</p>
+        <p className={`results-subtitle ${theme}`}>find more music</p>
       </header>
 
       {/* Search Section */}

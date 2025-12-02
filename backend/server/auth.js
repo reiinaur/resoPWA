@@ -570,15 +570,13 @@ router.get('/search', async (req, res) => {
       }
     );
     
-    if (!searchRes.ok) {
-      const result = await pool.query(
-        `SELECT * FROM tracks 
-         WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
-         ORDER BY created_at DESC`,
-        [`%${q}%`]
-      );
-      return res.json(result.rows);
-    }
+    const result = await pool.query(
+      `SELECT * FROM tracks 
+      WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
+      ORDER BY created_at DESC`,
+      [`%${q}%`]
+    );
+    return res.json(result.rows);
 
     const searchData = await searchRes.json();
     
