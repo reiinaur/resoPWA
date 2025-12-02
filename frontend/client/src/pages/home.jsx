@@ -70,8 +70,8 @@ export function Home() {
     );
   };
 
-  const handlePlaylistClick = (playlistId) => {
-    navigate(`/playlist/${playlistId}`);
+  const handlePlaylistClick = (playlistId, spotifyUrl) => {
+    window.open(spotifyUrl, '_blank', 'noopener,noreferrer');
   };
 
   const handleReconnect = () => {
@@ -156,6 +156,7 @@ export function Home() {
                   key={playlist.id}
                   className="playlist-card"
                   onClick={() => handlePlaylistClick(playlist.id)}
+                  title="Click to open in Spotify"
                 >
                   {playlist.image ? (
                     <img 

@@ -234,7 +234,8 @@ router.get('/my-playlists', async (req, res) => {
         description: playlist.description,
         tracks: playlist.tracks.total,
         image: playlist.images[0]?.url,
-        owner: playlist.owner.display_name
+        owner: playlist.owner.display_name,
+        external_urls: playlist.external_urls
       }));
 
       console.log(`Fetched ${formattedPlaylists.length} featured playlists`);

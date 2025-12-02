@@ -1,7 +1,6 @@
 import './app.css';
 import { Home } from './pages/home';
 import { Results } from './pages/results';
-import { Details } from './pages/details';
 import { Explore } from './pages/explore';
 import { Layout } from './layout';
 
@@ -16,7 +15,6 @@ return (
 					<Route path = "/" element={<Home/>}/>
 					<Route path = "/explore" element={<Explore/>}/>
 					<Route path = "/results" element={<Results/>}/>
-					<Route path = "/details" element={<Details/>}/>
 				</Route>
 			</Routes>
 		</Router>

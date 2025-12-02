@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useOutletContext } from 'react-router-dom';
 import './explore.css';
 
 export function Explore() {
@@ -11,6 +12,7 @@ export function Explore() {
   const navigate = useNavigate();
   
   const backendUrl = import.meta.env.VITE_API_URL;
+  const { theme } = useOutletContext();
 
   useEffect(() => {
     fetchExploreData();
@@ -70,118 +72,120 @@ export function Explore() {
   }
 
   return (
-    <div className="explore-container">
-      {/* Header */}
-      <header className="explore-header">
-        <h1 className="explore-title">explore your music</h1>
-        <p className="explore-subtitle">discover your listening patterns</p>
-      </header>
+    <div className={`explore-container ${theme}`}>
+      <div className="explore-container">
+        {/* Header */}
+        <header className="explore-header">
+          <h1 className="explore-title">explore your music</h1>
+          <p className="explore-subtitle">what have you been listening to recently?</p>
+        </header>
 
-      {/* Search Section */}
-      <section className="search-section">
-        <form onSubmit={handleSearch} className="search-form">
-          <div className="search-input-container">
-            <input
-              type="text"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search for songs, artists, albums..."
-              className="search-input"
-            />
-            <button type="submit" className="search-button">
-              Search
-            </button>
-          </div>
-        </form>
-      </section>
-
-      {/* Top Tracks Section */}
-      <section className="content-section">
-        <h2 className="content-title">your top songs</h2>
-        <div className="tracks-grid">
-          {topTracks.map(track => (
-            <div key={track.id} className="track-card">
-              {track.image ? (
-                <img 
-                  src={track.image} 
-                  alt={track.name}
-                  className="track-image"
-                />
-              ) : (
-                <div className="track-image-placeholder">
-                  🎵
-                </div>
-              )}
-              <div className="track-info">
-                <h3 className="track-name">{track.name}</h3>
-                <p className="track-artist">{track.artist}</p>
-                {track.duration && (
-                  <p className="track-duration">{formatDuration(track.duration)}</p>
-                )}
-              </div>
+        {/* Search Section */}
+        <section className="search-section">
+          <form onSubmit={handleSearch} className="search-form">
+            <div className="search-input-container">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search for songs, artists, albums..."
+                className="search-input"
+              />
+              <button type="submit" className="search-button">
+                Search
+              </button>
             </div>
-          ))}
-        </div>
-      </section>
+          </form>
+        </section>
 
-      {/* Top Albums Section */}
-      <section className="content-section">
-        <h2 className="content-title">your top albums</h2>
-        <div className="albums-grid">
-          {topAlbums.map(album => (
-            <div key={album.id} className="album-card">
-              {album.image ? (
-                <img 
-                  src={album.image} 
-                  alt={album.name}
-                  className="album-image"
-                />
-              ) : (
-                <div className="album-image-placeholder">
-                  💿
-                </div>
-              )}
-              <div className="album-info">
-                <h3 className="album-name">{album.name}</h3>
-                <p className="album-artist">{album.artist}</p>
-                <p className="album-tracks">{album.track_count} tracks</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* Top Artists Section */}
-      {topArtists.length > 0 && (
+        {/* Top Tracks Section */}
         <section className="content-section">
-          <h2 className="content-title">your top artists</h2>
-          <div className="artists-grid">
-            {topArtists.map(artist => (
-              <div key={artist.id} className="artist-card">
-                {artist.image ? (
+          <h2 className="content-title">your top songs</h2>
+          <div className="tracks-grid">
+            {topTracks.map(track => (
+              <div key={track.id} className="track-card">
+                {track.image ? (
                   <img 
-                    src={artist.image} 
-                    alt={artist.name}
-                    className="artist-image"
+                    src={track.image} 
+                    alt={track.name}
+                    className="track-image"
                   />
                 ) : (
-                  <div className="artist-image-placeholder">
-                    👤
+                  <div className="track-image-placeholder">
+                    🎵
                   </div>
                 )}
-                <div className="artist-info">
-                  <h3 className="artist-name">{artist.name}</h3>
-                  {artist.followers > 0 && (
-                    <p className="artist-followers">
-                      {artist.followers.toLocaleString()} followers
-                    </p>
+                <div className="track-info">
+                  <h3 className="track-name">{track.name}</h3>
+                  <p className="track-artist">{track.artist}</p>
+                  {track.duration && (
+                    <p className="track-duration">{formatDuration(track.duration)}</p>
                   )}
                 </div>
               </div>
             ))}
           </div>
         </section>
-      )}
+
+        {/* Top Albums Section */}
+        <section className="content-section">
+          <h2 className="content-title">your top albums</h2>
+          <div className="albums-grid">
+            {topAlbums.map(album => (
+              <div key={album.id} className="album-card">
+                {album.image ? (
+                  <img 
+                    src={album.image} 
+                    alt={album.name}
+                    className="album-image"
+                  />
+                ) : (
+                  <div className="album-image-placeholder">
+                    💿
+                  </div>
+                )}
+                <div className="album-info">
+                  <h3 className="album-name">{album.name}</h3>
+                  <p className="album-artist">{album.artist}</p>
+                  <p className="album-tracks">{album.track_count} tracks</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Top Artists Section */}
+        {topArtists.length > 0 && (
+          <section className="content-section">
+            <h2 className="content-title">your top artists</h2>
+            <div className="artists-grid">
+              {topArtists.map(artist => (
+                <div key={artist.id} className="artist-card">
+                  {artist.image ? (
+                    <img 
+                      src={artist.image} 
+                      alt={artist.name}
+                      className="artist-image"
+                    />
+                  ) : (
+                    <div className="artist-image-placeholder">
+                      👤
+                    </div>
+                  )}
+                  <div className="artist-info">
+                    <h3 className="artist-name">{artist.name}</h3>
+                    {artist.followers > 0 && (
+                      <p className="artist-followers">
+                        {artist.followers.toLocaleString()} followers
+                      </p>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
