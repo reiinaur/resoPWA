@@ -21,6 +21,16 @@ export function Results() {
       const res = await fetch(`${backendUrl}/auth/tracks`);
       if (res.ok) {
         const data = await res.json();
+
+        console.log('DEBUG - First track from /auth/tracks:', {
+        name: data[0]?.name,
+        hasImage: !!data[0]?.image,
+        hasImage_url: !!data[0]?.image_url,
+        hasAlbum_images: !!data[0]?.album_images,
+        album_images_type: typeof data[0]?.album_images,
+        album_images_value: data[0]?.album_images
+      });
+
         setTracks(data);
         localStorage.setItem('spotifyTracks', JSON.stringify(data));
       } else {
@@ -79,12 +89,17 @@ export function Results() {
   };
 
   const getImageUrl = (track) => {
-    if (track.image) return track.image;
-    if (track.image_url) return track.image_url;
-    if (track.album?.images?.[0]?.url) return track.album.images[0].url;
-    if (track.images?.[0]?.url) return track.images[0].url;
-    if (track.album_images?.[0]?.url) return track.album_images[0].url;
-  };
+  if (track.image) return track.image;
+  
+  if (track.album_images && track.album_images.length > 0) {
+    return track.album_images[0].url;
+  }
+  if (track.image_url) return track.image_url;
+  if (track.album?.images?.[0]?.url) return track.album.images[0].url;
+  if (track.images?.[0]?.url) return track.images[0].url;
+  
+  return null;
+};
 
   if (loading) {
     return (

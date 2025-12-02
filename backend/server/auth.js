@@ -521,24 +521,9 @@ router.get('/tracks', async (req, res) => {
       duration_ms: item.track.duration_ms,
       preview_url: item.track.preview_url,
       external_urls: item.track.external_urls,
-      album_images: item.track.album.images,
-      image: item.track.album.images[0]?.url,
+      image: item.track.album.images[0]?.url, 
       user_id: req.user?.id || null
     }));
-
-    for (const track of formattedTracks) {
-      await pool.query(
-        `INSERT INTO tracks(id, name, artist, album, image_url, user_id)
-         VALUES ($1, $2, $3, $4, $5, $6)
-         ON CONFLICT(id) DO UPDATE SET 
-           name = $2, 
-           artist = $3, 
-           album = $4, 
-           image_url = $5, 
-           user_id = $6`,
-        [track.id, track.name, track.artist, track.album, track.image, track.user_id]
-      );
-    }
 
     console.log(`Fetched ${formattedTracks.length} tracks with images from Spotify`);
     res.json(formattedTracks);
