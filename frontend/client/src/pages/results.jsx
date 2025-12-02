@@ -198,12 +198,35 @@ export function Results() {
                   style={{ cursor: 'pointer' }} 
                 >
                   <div className="track-image-container">
-                    {getImageUrl(track) ? (
+                    {track.image ? (
                       <img 
-                        src={getImageUrl(track)}
+                        src={track.image}
                         alt={track.name}
                         className="track-image"
                         onError={(e) => {
+                          console.log('Search image failed:', track.image, 'for:', track.name);
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<div class="track-image-placeholder">🎵</div>';
+                        }}                    
+                      />
+                    ) : track.image_url ? (
+                      <img 
+                        src={track.image_url}
+                        alt={track.name}
+                        className="track-image"
+                        onError={(e) => {
+                          console.log('Image_url failed:', track.image_url, 'for:', track.name);
+                          e.target.style.display = 'none';
+                          e.target.parentElement.innerHTML = '<div class="track-image-placeholder">🎵</div>';
+                        }}                    
+                      />
+                    ) : track.album_images && track.album_images.length > 0 ? (
+                      <img 
+                        src={typeof track.album_images[0] === 'string' ? track.album_images[0] : track.album_images[0].url}
+                        alt={track.name}
+                        className="track-image"
+                        onError={(e) => {
+                          console.log('Album_images failed:', track.album_images, 'for:', track.name);
                           e.target.style.display = 'none';
                           e.target.parentElement.innerHTML = '<div class="track-image-placeholder">🎵</div>';
                         }}                    
