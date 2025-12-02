@@ -115,7 +115,7 @@ export function Explore() {
           <h2 className="content-title">your top songs</h2>
           <div className="tracks-grid">
             {topTracks.map(track => (
-              <div key={track.id} className="track-card" onClick={() => handleItemClick(track, 'track')}  title={trackDetails.spotifyUrl ? "Click to open in Spotify" : "Click for details"}>
+              <div key={track.id} className="track-card" onClick={() => handleItemClick(track, 'track')}  title={track.external_urls?.spotify ? "Click to open in Spotify" : "Click for details"}>
                 {track.image ? (
                   <img 
                     src={track.image} 
