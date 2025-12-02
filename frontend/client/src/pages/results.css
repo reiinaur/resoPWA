@@ -402,13 +402,13 @@
 }
 
 .play-btn {
-  background-color: #3d3d3d;
-  color: #ffe4ed;
+  background-color: #ffe4ed;
+  color: white;
 }
 
 .results-container.dark .play-btn {
-  background-color: #ffe4ed;
-  color: white;
+  background-color: #3d3d3d;
+  color: #ffe4ed;
 }
 
 .save-btn {

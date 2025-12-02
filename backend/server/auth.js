@@ -555,21 +555,72 @@ router.get('/tracks', async (req, res) => {
 
 router.get('/search', async (req, res) => {
   try {
-    const { q } = req.query;
+    const { q, type = 'track' } = req.query;
+    const accessToken = await getUserAccessToken();
     
     if (!q) {
-      const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
-      return res.json(result.rows);
-    }
-
-    const result = await pool.query(
-      `SELECT * FROM tracks 
-       WHERE name ILIKE $1 OR artist ILIKE $1 OR album ILIKE $1 
-       ORDER BY created_at DESC`,
-      [`%${q}%`]
+const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      
+      if (tracksRes.ok) {
+        const tracksData = await tracksRes.json();
+        const formattedTracks = tracksData.items.map(item => ({
+          id: item.track.id,
+          name: item.track.name,
+          artist: item.track.artists.map(artist => artist.name).join(', '),
+          album: item.track.album.name,
+          image: item.track.album.images[0]?.url,
+          duration_ms: item.track.duration_ms
+        }));
+        return res.json(formattedTracks);
+      }
+    }    
+    res.json(result.rows);
+    const searchRes = await fetch(
+      `https://api.spotify.com/v1/search?q=${encodeURIComponent(q)}&type=${type}&limit=20`,
+      {
+        headers: { Authorization: `Bearer ${accessToken}` }
+      }
     );
     
-    res.json(result.rows);
+    if (!searchRes.ok) {
+      throw new Error('Search failed');
+    }
+    
+    const searchData = await searchRes.json();
+    
+    let results = [];
+    if (type === 'track') {
+      results = searchData.tracks.items.map(track => ({
+        id: track.id,
+        name: track.name,
+        artist: track.artists.map(artist => artist.name).join(', '),
+        album: track.album.name,
+        image: track.album.images[0]?.url,
+        duration_ms: track.duration_ms
+      }));
+    } else if (type === 'artist') {
+      results = searchData.artists.items.map(artist => ({
+        id: artist.id,
+        name: artist.name,
+        artist: artist.name,
+        image: artist.images[0]?.url,
+        followers: artist.followers.total
+      }));
+    } else if (type === 'album') {
+      results = searchData.albums.items.map(album => ({
+        id: album.id,
+        name: album.name,
+        artist: album.artists.map(artist => artist.name).join(', '),
+        album: album.name,
+        image: album.images[0]?.url,
+        release_date: album.release_date,
+        track_count: album.total_tracks
+      }));
+    }
+    
+    res.json(results);
   } catch (err) {
     console.error('Search error:', err);
     res.status(500).json({ error: 'Error searching tracks' });

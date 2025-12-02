@@ -88,7 +88,7 @@ export function Home() {
   <div 
     key={playlist.id}
     className="playlist-card"
-    onClick={() => handlePlaylistClick(playlist.id)}
+    onClick={() => handlePlaylistClick(playlist)}
     title={playlist.external_urls?.spotify ? "Click to open in Spotify" : "Click to view details"}
   />
 ))}
@@ -174,7 +174,7 @@ export function Home() {
                 <div 
                   key={playlist.id}
                   className="playlist-card"
-                  onClick={() => handlePlaylistClick(playlist.id)}
+                  onClick={() => handlePlaylistClick(playlist)}
                   title="Click to open in Spotify"
                 >
                   {playlist.image ? (
