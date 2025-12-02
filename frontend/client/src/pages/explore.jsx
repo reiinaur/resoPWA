@@ -115,7 +115,7 @@ export function Explore() {
           <h2 className="content-title">your top songs</h2>
           <div className="tracks-grid">
             {topTracks.map(track => (
-              <div key={track.id} className="track-card">
+              <div key={track.id} className="track-card" onClick={() => handleItemClick(track, 'track')}  title={trackDetails.spotifyUrl ? "Click to open in Spotify" : "Click for details"}>
                 {track.image ? (
                   <img 
                     src={track.image} 
@@ -133,11 +133,7 @@ export function Explore() {
                   {track.duration && (
                     <p className="track-duration">{formatDuration(track.duration)}</p>
                   )}
-                  {track.external_urls?.spotify && (
-                    <div className="spotify-indicator">
-                      <span className="spotify-icon-small">▶️</span>
-                    </div>
-                  )}
+                  {track.external_urls?.spotify}
                 </div>
               </div>
             ))}
@@ -165,11 +161,7 @@ export function Explore() {
                   <h3 className="album-name">{album.name}</h3>
                   <p className="album-artist">{album.artist}</p>
                   <p className="album-tracks">{album.track_count} tracks</p>
-                  {album.external_urls?.spotify && (
-                    <div className="spotify-indicator">
-                      <span className="spotify-icon-small">▶️</span>
-                    </div>
-                  )}
+                  {album.external_urls?.spotify}
                 </div>
               </div>
             ))}
@@ -201,11 +193,7 @@ export function Explore() {
                         {artist.followers.toLocaleString()} followers
                       </p>
                     )}
-                    {artist.external_urls?.spotify && (
-                      <div className="spotify-indicator">
-                        <span className="spotify-icon-small">▶️</span>
-                      </div>
-                    )}
+                    {artist.external_urls?.spotify}
                   </div>
                 </div>
               ))}

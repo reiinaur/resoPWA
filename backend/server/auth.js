@@ -501,11 +501,55 @@ router.get('/playlist/:id', async (req, res) => {
 
 router.get('/tracks', async (req, res) => {
   try {
-    const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
-    res.json(result.rows);
+    const accessToken = await getUserAccessToken();
+    
+    // Fetch saved tracks from Spotify
+    const tracksRes = await fetch('https://api.spotify.com/v1/me/tracks?limit=50', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+
+    if (!tracksRes.ok) {
+      console.log('Failed to fetch tracks from Spotify, falling back to database');
+      const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
+      return res.json(result.rows);
+    }
+
+    const tracksData = await tracksRes.json();
+    
+    const formattedTracks = tracksData.items.map(item => ({
+      id: item.track.id,
+      name: item.track.name,
+      artist: item.track.artists.map(artist => artist.name).join(', '),
+      album: item.track.album.name,
+      duration_ms: item.track.duration_ms,
+      preview_url: item.track.preview_url,
+      external_urls: item.track.external_urls,
+      album_images: item.track.album.images,
+      image: item.track.album.images[0]?.url,
+      user_id: req.user?.id || null
+    }));
+
+    for (const track of formattedTracks) {
+      await pool.query(
+        `INSERT INTO tracks(id, name, artist, album, image_url, user_id)
+         VALUES ($1, $2, $3, $4, $5, $6)
+         ON CONFLICT(id) DO UPDATE SET 
+           name = $2, 
+           artist = $3, 
+           album = $4, 
+           image_url = $5, 
+           user_id = $6`,
+        [track.id, track.name, track.artist, track.album, track.image, track.user_id]
+      );
+    }
+
+    console.log(`Fetched ${formattedTracks.length} tracks with images from Spotify`);
+    res.json(formattedTracks);
   } catch (err) {
     console.error('Error fetching tracks:', err);
-    res.status(500).json({ error: 'Error fetching tracks' });
+    
+    const result = await pool.query('SELECT * FROM tracks ORDER BY created_at DESC');
+    res.json(result.rows);
   }
 });
 
