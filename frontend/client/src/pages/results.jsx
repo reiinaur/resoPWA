@@ -89,16 +89,7 @@ export function Results() {
   };
 
   const getImageUrl = (track) => {
-  if (track.image) return track.image;
-  
-  if (track.album_images && track.album_images.length > 0) {
-    return track.album_images[0].url;
-  }
-  if (track.image_url) return track.image_url;
-  if (track.album?.images?.[0]?.url) return track.album.images[0].url;
-  if (track.images?.[0]?.url) return track.images[0].url;
-  
-  return null;
+  return track.image || track.image_url
 };
 
   if (loading) {
